@@ -1,5 +1,6 @@
 package product.service;
 
+import exception.business.detailed_exceptions.InsufficientStockException;
 import exception.business.detailed_exceptions.ProductNameAlreadyInUseException;
 import exception.resource.detailed_exceptions.ProductNotFoundException;
 import org.junit.jupiter.api.DisplayName;
@@ -815,10 +816,10 @@ public class ProductManagementServiceImplTest {
         verify(productRepository, never()).decreaseQuantity(anyLong(), anyInt());
     }
 
-    // Decrease invalid number (excessive), throw RuntimeException
+    // Decrease invalid number (excessive), throw InsufficientStockException
     @Test
-    @DisplayName("Decrease stock by more than the available quantity throws RuntimeException")
-    void decreaseStockQuantity_insufficientStock_throwsRuntimeException()
+    @DisplayName("Decrease stock by more than the available quantity throws InsufficientStockException")
+    void decreaseStockQuantity_insufficientStock_throwsInsufficientStockException()
     {
         // --GIVEN--
         Product persistedProduct = createPersistedPhysicalProduct();
@@ -828,8 +829,8 @@ public class ProductManagementServiceImplTest {
         when(productRepository.decreaseQuantity(productId, excessiveDecreaseQuantity)).thenReturn(false);
 
         // --WHEN--
-        RuntimeException exception = assertThrows(
-                RuntimeException.class,
+        InsufficientStockException exception = assertThrows(
+                InsufficientStockException.class,
                 () -> productManagementServiceImpl.decreaseStockQuantity(
                         productId, excessiveDecreaseQuantity
                 )
@@ -837,7 +838,7 @@ public class ProductManagementServiceImplTest {
 
         // --THEN--
         assertEquals(
-                "Decrease quantity has failed due to insufficient quantity",
+                "Product [id=1] does not have enough stock: requested 11, available 10",
                 exception.getMessage()
         );
         verify(productRepository).findById(productId);

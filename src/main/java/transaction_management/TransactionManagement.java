@@ -6,31 +6,57 @@ import java.util.Objects;
 
 public class TransactionManagement {
     private final Connection connection;
-//    constructor
+
     public TransactionManagement(Connection connection) {
         this.connection = Objects.requireNonNull(connection, "connection is null");
     }
-//    execute
-    public <T> T execute(TransactionWork<T> work){
-        boolean previousAutoCommit;
-        try{
-            previousAutoCommit = connection.getAutoCommit();
+
+    public <T> T execute(TransactionWork<T> work) {
+        Objects.requireNonNull(work, "transaction work is null");
+        boolean previousAutoCommit = getAutoCommit();
+
+        try {
             connection.setAutoCommit(false);
-            try{
-                T result = work.execute();
-                connection.commit();
-                return result;
-            }catch(RuntimeException e){ // Lỗi từ service content được thêm vào - tầng transaction hứng
-                connection.rollback();
-                throw e;
-            }
-            finally{
-                connection.setAutoCommit(previousAutoCommit);
-            }
-        }catch (SQLException e){
-            throw new RuntimeException("Transaction failed",e);
+        } catch (SQLException exception) {
+            throw new RuntimeException("Transaction failed", exception);
+        }
+
+        try {
+            T result = work.execute();
+            connection.commit();
+            return result;
+        } catch (RuntimeException | Error exception) {
+            rollbackAfterFailure(exception);
+            throw exception;
+        } catch (SQLException exception) {
+            rollbackAfterFailure(exception);
+            throw new RuntimeException("Transaction failed", exception);
+        } finally {
+            restoreAutoCommit(previousAutoCommit);
         }
     }
 
+    private boolean getAutoCommit() {
+        try {
+            return connection.getAutoCommit();
+        } catch (SQLException exception) {
+            throw new RuntimeException("Transaction failed", exception);
+        }
+    }
 
+    private void rollbackAfterFailure(Throwable originalFailure) {
+        try {
+            connection.rollback();
+        } catch (SQLException rollbackFailure) {
+            originalFailure.addSuppressed(rollbackFailure);
+        }
+    }
+
+    private void restoreAutoCommit(boolean autoCommit) {
+        try {
+            connection.setAutoCommit(autoCommit);
+        } catch (SQLException exception) {
+            throw new RuntimeException("Failed to restore auto-commit", exception);
+        }
+    }
 }

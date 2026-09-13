@@ -1,6 +1,7 @@
 package product.service;
 
 import exception.business.detailed_exceptions.ProductNameAlreadyInUseException;
+import exception.business.detailed_exceptions.InsufficientStockException;
 import exception.resource.detailed_exceptions.ProductNotFoundException;
 import product.entities.*;
 import product.repository.ProductRepository;
@@ -167,13 +168,15 @@ public class ProductManagementServiceImpl implements ProductManagementService{
         {
             throw new IllegalArgumentException("Product quantity cannot be negative");
         }
-        if(productRepository.findById(productId).isEmpty()){
-            throw new ProductNotFoundException(productId);
-        }
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
         if(!productRepository.decreaseQuantity(productId, decreaseQuantity))
         {
-            // lỗi chưa được bóc tách rõ ràng
-            throw new RuntimeException("Decrease quantity has failed due to insufficient quantity");
+            throw new InsufficientStockException(
+                    productId,
+                    decreaseQuantity,
+                    product.getQuantity()
+            );
         }
     }
 //    increase quantity

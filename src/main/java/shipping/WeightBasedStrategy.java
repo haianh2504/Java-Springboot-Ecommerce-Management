@@ -1,36 +1,33 @@
 package shipping;
 
-import cart_item.entities.CartItem;
-import cart_item.repository.CartItemRepository;
-import product.entities.Product;
-import product.repository.ProductRepository;
+import checkout.entities.CheckoutItem;
+import product.entities.PhysicalProduct;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 
 public class WeightBasedStrategy implements ShippingStrategy {
-    private final BigDecimal price_per_unit;
+    private final BigDecimal pricePerWeightUnit;
 //    constructor
-    public WeightBasedStrategy(BigDecimal price_per_unit) {
-        this.price_per_unit = Objects.requireNonNull(price_per_unit);
-        if(price_per_unit.compareTo(BigDecimal.ZERO) <= 0) {
+    public WeightBasedStrategy(BigDecimal pricePerWeightUnit) {
+        this.pricePerWeightUnit = Objects.requireNonNull(pricePerWeightUnit, "pricePerWeightUnit must not be null");
+        if(pricePerWeightUnit.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Price per unit must be greater than zero");
         }
     }
-//    calculate Fee
+    //    calculate Fee
     @Override
-    public BigDecimal calculateShippingFee(List<CartItem> cartItems) {
-        Objects.requireNonNull(cartItems, "cartItems must not be null");
+    public BigDecimal calculateShippingFee(List<CheckoutItem> checkoutItems) {
+        Objects.requireNonNull(checkoutItems, "checkoutItems must not be null");
         BigDecimal totalWeight = BigDecimal.ZERO;
-        for(int i =0; i < cartItems.size(); i++)
-        {
-            totalWeight = totalWeight.add(
-                    BigDecimal.valueOf(
-                            cartItems.get(i).getNumber()
-                    )
-            );
+        for (CheckoutItem checkoutItem : checkoutItems) {
+            if (checkoutItem.product() instanceof PhysicalProduct physicalProduct) {
+                BigDecimal itemWeight = physicalProduct.getWeight()
+                        .multiply(BigDecimal.valueOf(checkoutItem.cartItem().getNumber()));
+                totalWeight = totalWeight.add(itemWeight);
+            }
         }
-        return price_per_unit.multiply(totalWeight);
+        return pricePerWeightUnit.multiply(totalWeight);
     }
 }

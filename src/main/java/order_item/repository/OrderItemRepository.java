@@ -5,7 +5,7 @@ import order_item.entities.OrderItem;
 import java.util.List;
 import java.util.Optional;
 
-public interface OrderItemRepo {
+public interface OrderItemRepository {
 //    save Order item
     public void save(OrderItem orderItem);
 //    delete Order item while Order are in PENDING_PAYMENT status

@@ -8,7 +8,7 @@ import cart_item.repository.CartItemRepository;
 import cart_item.repository.JdbcCartItemRepository;
 import cart_item.service.CartItemManagementService;
 import cart_item.service.CartItemManagementServiceImpl;
-import checkout.service.CheckouServiceImpl;
+import checkout.service.CheckoutServiceImpl;
 import checkout.service.CheckoutService;
 import common.DatabaseConnection;
 import discount.service.DiscountService;
@@ -17,8 +17,8 @@ import order.repository.JdbcOrderRepository;
 import order.repository.OrderRepository;
 import order.service.OrderManagementService;
 import order.service.OrderManagementServiceImpl;
-import order_item.repository.JdbcOrderItemRepo;
-import order_item.repository.OrderItemRepo;
+import order_item.repository.JdbcOrderItemRepository;
+import order_item.repository.OrderItemRepository;
 import order_item.service.OrderItemManagementService;
 import order_item.service.OrderItemManagementServiceImpl;
 import product.entities.Product;
@@ -49,7 +49,7 @@ public class Main {
         CartItemRepository cartItemRepository = new JdbcCartItemRepository(connection);
         ProductRepository productRepository = new JdbcProductRepository(connection);
         OrderRepository orderRepository = new JdbcOrderRepository(connection);
-        OrderItemRepo orderItemRepository = new JdbcOrderItemRepo(connection);
+        OrderItemRepository orderItemRepository = new JdbcOrderItemRepository(connection);
         // cart service setting up
         CartManagementService cartManagementService = new CartManagementServiceImpl(cartRepository,cartItemRepository);
         // cart Item service setting up
@@ -62,18 +62,21 @@ public class Main {
         ShippingStrategy shippingStrategy = new WeightBasedStrategy(BigDecimal.valueOf(20_000));
         DiscountService discountService = new DiscountServiceImpl();
         OrderManagementService orderManagementService = new OrderManagementServiceImpl(orderRepository, shippingStrategy);
-        OrderItemManagementService orderItemManagementService = new OrderItemManagementServiceImpl(orderItemRepository);
+        OrderItemManagementService orderItemManagementService = new OrderItemManagementServiceImpl(
+                orderItemRepository,
+                orderRepository
+        );
+        TransactionManagement transactionManagement = new TransactionManagement(connection);
         // checkout service setting up
-        CheckoutService checkoutService = new CheckouServiceImpl(
-                cartRepository,
-                cartItemRepository,
+        CheckoutService checkoutService = new CheckoutServiceImpl(
                 cartManagementService,
                 cartItemManagementService,
                 shippingStrategy,
                 discountService,
                 orderManagementService,
                 orderItemManagementService,
-                productManagementService
+                productManagementService,
+                transactionManagement
         );
         // create product
         Product product1 = productManagementService.createNewPhysicalProduct(

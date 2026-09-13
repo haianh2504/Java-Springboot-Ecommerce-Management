@@ -1,22 +1,23 @@
 package discount.service;
 
-import discount.entities.Discount;
-
 import java.math.BigDecimal;
 import java.util.Objects;
 
 public class DiscountServiceImpl implements DiscountService {
     @Override
-    public BigDecimal calculateDiscountAmount(Discount discount) {
-        Objects.requireNonNull(discount, "discount must not be null");
-        BigDecimal discountAmount = BigDecimal.ZERO;
-        if(discount.getSubTotal().compareTo(BigDecimal.valueOf(5_000_000)) >= 0)
-        {
-            discountAmount = discount.getSubTotal().multiply(BigDecimal.valueOf(15)).divide(BigDecimal.valueOf(100));
+    public BigDecimal calculateDiscountAmount(BigDecimal subTotal) {
+        Objects.requireNonNull(subTotal, "subTotal must not be null");
+        if (subTotal.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("subTotal must not be negative");
         }
-        else if(discount.getSubTotal().compareTo(BigDecimal.valueOf(1_000_000)) >= 0)
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        if(subTotal.compareTo(BigDecimal.valueOf(5_000_000)) >= 0)
         {
-            discountAmount = discount.getSubTotal().multiply(BigDecimal.valueOf(8)).divide(BigDecimal.valueOf(100));
+            discountAmount = subTotal.multiply(BigDecimal.valueOf(15)).divide(BigDecimal.valueOf(100));
+        }
+        else if(subTotal.compareTo(BigDecimal.valueOf(1_000_000)) >= 0)
+        {
+            discountAmount = subTotal.multiply(BigDecimal.valueOf(8)).divide(BigDecimal.valueOf(100));
         }
         return discountAmount;
     }

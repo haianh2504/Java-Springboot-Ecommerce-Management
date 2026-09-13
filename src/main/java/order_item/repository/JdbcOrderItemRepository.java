@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public class JdbcOrderItemRepo implements OrderItemRepo {
+public class JdbcOrderItemRepository implements OrderItemRepository {
     private final Connection connection;
-    public JdbcOrderItemRepo(Connection connection) {
+    public JdbcOrderItemRepository(Connection connection) {
         this.connection = Objects.requireNonNull(connection, "Order Items' Connection cannot be null");
     }
 //    save order item

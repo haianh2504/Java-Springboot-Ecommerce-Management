@@ -3,6 +3,7 @@ package checkout.entities;
 import cart_item.entities.CartItem;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -44,6 +45,24 @@ public class CheckoutItemTest {
         return Stream.of(
                 Arguments.of("cartItem", "cartItem cannot be null", null, PRODUCT),
                 Arguments.of("product", "product cannot be null", CART_ITEM, null)
+        );
+    }
+
+    @Test
+    @DisplayName("Checkout item exposes the product price and calculates its line total")
+    void pricing_validComponents_usesProductBasePrice()
+    {
+        // --GIVEN--
+        CheckoutItem checkoutItem = new CheckoutItem(CART_ITEM, PRODUCT);
+
+        // --WHEN--
+        BigDecimal unitPrice = checkoutItem.unitPrice();
+        BigDecimal lineTotal = checkoutItem.lineTotal();
+
+        // --THEN--
+        Assertions.assertAll(
+                () -> Assertions.assertEquals(0, unitPrice.compareTo(new BigDecimal("25.00"))),
+                () -> Assertions.assertEquals(0, lineTotal.compareTo(new BigDecimal("25.00")))
         );
     }
 }

@@ -2,7 +2,6 @@ package order.repository;
 
 import order.entities.Order;
 import order.entities.OrderStatus;
-import order_item.repository.OrderItemRepo;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
