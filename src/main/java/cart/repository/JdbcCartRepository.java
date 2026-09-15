@@ -155,4 +155,21 @@ public class JdbcCartRepository implements CartRepository {
             throw new RuntimeException("Error while updating cart from database: " + e.getMessage(), e);
         }
     }
+
+    @Override
+    public boolean markCheckedOutIfActive(Long cartId) {
+        String sql = """
+                UPDATE carts
+                SET status = 'CHECKED_OUT'
+                WHERE id = ? AND status = 'ACTIVE';
+                """;
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, cartId);
+            // PostgreSQL locks the matching cart row. A concurrent checkout waits,
+            // then re-evaluates status after the first transaction commits/rolls back.
+            return ps.executeUpdate() == 1;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error while claiming cart for checkout: " + e.getMessage(), e);
+        }
+    }
 }

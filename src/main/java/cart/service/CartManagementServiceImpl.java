@@ -3,6 +3,7 @@ package cart.service;
 import cart.entities.Cart;
 import cart.repository.CartRepository;
 import cart_item.repository.CartItemRepository;
+import exception.business.detailed_exceptions.CartAlreadyCheckedOutException;
 import exception.resource.detailed_exceptions.CartNotFoundException;
 
 import java.util.List;
@@ -48,10 +49,15 @@ public class CartManagementServiceImpl implements CartManagementService {
     @Override
     public void checkoutCart(Long cartId) {
         Objects.requireNonNull(cartId, "cartId cannot be null");
-        Cart cart = cartRepository.findById(cartId).orElseThrow(
-                () -> new CartNotFoundException(cartId)
-        );
-        cart.setCheckedOutStatus();
-        cartRepository.update(cart);
+        if (cartRepository.markCheckedOutIfActive(cartId)) {
+            return;
+        }
+
+        // A zero-row UPDATE has two possible meanings. This lookup translates the
+        // persistence result into the correct domain error for the application edge.
+        if (cartRepository.findById(cartId).isEmpty()) {
+            throw new CartNotFoundException(cartId);
+        }
+        throw new CartAlreadyCheckedOutException();
     }
 }

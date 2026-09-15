@@ -253,7 +253,9 @@ public final class JdbcProductRepository implements ProductRepository {
         String sql = """
                 UPDATE products
                 SET quantity = quantity - ?
-                WHERE id = ? AND quantity >= ?;
+                WHERE id = ?
+                  AND status = 'ACTIVE'
+                  AND quantity >= ?;
                 """;
         try(PreparedStatement ps = connection.prepareStatement(sql))
         {
@@ -261,7 +263,9 @@ public final class JdbcProductRepository implements ProductRepository {
             ps.setLong(2, productId);
             ps.setInt(3, quantity);
             int affectedRows = ps.executeUpdate();
-            // SQL run but nothing change due to ID wrong OR quantity of the product is < than number we want
+            // The stock check and subtraction happen in one statement. PostgreSQL
+            // re-checks the predicate after waiting for a concurrent row lock, which
+            // prevents two buyers from both spending the same remaining inventory.
             return affectedRows == 1;
         }catch (SQLException e)
         {

@@ -76,6 +76,11 @@ public class CheckoutServiceImpl implements CheckoutService {
             Cart cart = cartManagementService.getCartById(cartId);
             validateCartOwnership(cart, userId);
 
+            // Reserve the cart before creating any order data. This UPDATE is not a
+            // premature commit: it uses the same connection and is reverted together
+            // with order/stock changes if any later checkout step fails.
+            cartManagementService.checkoutCart(cartId);
+
             List<CartItem> cartItems = cartItemManagementService.getCartItemsByCartId(cartId);
             if (cartItems.isEmpty()) {
                 throw new CartIsEmptyException();
@@ -86,6 +91,7 @@ public class CheckoutServiceImpl implements CheckoutService {
             BigDecimal subTotal = calculateSubtotal(checkoutItems);
             BigDecimal shippingFee = shippingStrategy.calculateShippingFee(checkoutItems);
             BigDecimal discountAmount = discountService.calculateDiscountAmount(subTotal);
+            validatePriceAdjustments(subTotal, shippingFee, discountAmount);
             BigDecimal totalPrice = subTotal.add(shippingFee).subtract(discountAmount);
 
             Order order = orderManagementService.createOrder(
@@ -113,8 +119,6 @@ public class CheckoutServiceImpl implements CheckoutService {
                         checkoutItem.cartItem().getNumber()
                 );
             }
-
-            cartManagementService.checkoutCart(cartId);
             return order;
         });
     }
@@ -140,5 +144,23 @@ public class CheckoutServiceImpl implements CheckoutService {
             subTotal = subTotal.add(checkoutItem.lineTotal());
         }
         return subTotal;
+    }
+
+    private void validatePriceAdjustments(
+            BigDecimal subTotal,
+            BigDecimal shippingFee,
+            BigDecimal discountAmount
+    ) {
+        Objects.requireNonNull(shippingFee, "shippingFee is required");
+        Objects.requireNonNull(discountAmount, "discountAmount is required");
+        if (shippingFee.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("shippingFee cannot be negative");
+        }
+        if (discountAmount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("discountAmount cannot be negative");
+        }
+        if (discountAmount.compareTo(subTotal.add(shippingFee)) > 0) {
+            throw new IllegalArgumentException("discountAmount cannot exceed the payable amount");
+        }
     }
 }

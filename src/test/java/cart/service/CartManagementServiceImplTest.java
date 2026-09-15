@@ -4,6 +4,7 @@ import cart.entities.Cart;
 import cart.entities.CartStatus;
 import cart.repository.CartRepository;
 import cart_item.repository.CartItemRepository;
+import exception.business.detailed_exceptions.CartAlreadyCheckedOutException;
 import exception.resource.detailed_exceptions.CartNotFoundException;
 import exception.resource.detailed_exceptions.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
@@ -205,21 +206,43 @@ public class CartManagementServiceImplTest {
 
     // Check out cart successfully
     @Test
-    @DisplayName("Check out an existing active cart and persist its checked-out status")
-    void checkoutCart_existingActiveCart_updatesStatusSuccessfully()
+    @DisplayName("Atomically claim an existing active cart for checkout")
+    void checkoutCart_existingActiveCart_claimsSuccessfully()
     {
         // --GIVEN--
         Cart persistedCart = createPersistedActiveCart();
         Long cartId = persistedCart.getCartId();
-        when(cartRepository.findById(cartId)).thenReturn(Optional.of(persistedCart));
+        when(cartRepository.markCheckedOutIfActive(cartId)).thenReturn(true);
 
         // --WHEN--
         cartManagementServiceImpl.checkoutCart(cartId);
 
         // --THEN--
-        assertSame(CartStatus.CHECKED_OUT, persistedCart.getCartStatus());
+        assertSame(CartStatus.ACTIVE, persistedCart.getCartStatus());
+        verify(cartRepository).markCheckedOutIfActive(cartId);
+        verifyNoInteractions(cartItemRepository);
+    }
+
+    @Test
+    @DisplayName("Check out an already checked-out cart throws CartAlreadyCheckedOutException")
+    void checkoutCart_checkedOutCart_throwsCartAlreadyCheckedOutException()
+    {
+        // --GIVEN--
+        Cart persistedCart = createPersistedCheckedOutCart();
+        Long cartId = persistedCart.getCartId();
+        when(cartRepository.markCheckedOutIfActive(cartId)).thenReturn(false);
+        when(cartRepository.findById(cartId)).thenReturn(Optional.of(persistedCart));
+
+        // --WHEN--
+        CartAlreadyCheckedOutException exception = assertThrows(
+                CartAlreadyCheckedOutException.class,
+                () -> cartManagementServiceImpl.checkoutCart(cartId)
+        );
+
+        // --THEN--
+        assertEquals("This cart has already been checked out", exception.getMessage());
+        verify(cartRepository).markCheckedOutIfActive(cartId);
         verify(cartRepository).findById(cartId);
-        verify(cartRepository).update(persistedCart);
         verifyNoInteractions(cartItemRepository);
     }
 
@@ -230,6 +253,7 @@ public class CartManagementServiceImplTest {
     {
         // --GIVEN--
         Long cartId = 99L;
+        when(cartRepository.markCheckedOutIfActive(cartId)).thenReturn(false);
         when(cartRepository.findById(cartId)).thenReturn(Optional.empty());
 
         // --WHEN--
@@ -240,8 +264,8 @@ public class CartManagementServiceImplTest {
 
         // --THEN--
         assertEquals("Cart with id 99 not found", exception.getMessage());
+        verify(cartRepository).markCheckedOutIfActive(cartId);
         verify(cartRepository).findById(cartId);
-        verify(cartRepository, never()).update(any(Cart.class));
         verifyNoInteractions(cartItemRepository);
     }
 

@@ -17,4 +17,7 @@ public interface CartRepository {
     public void deleteById(Long cartId);
 //    update cart
     public void update(Cart cart);
+    // Atomically claims an active cart for checkout. The status change participates
+    // in the caller's JDBC transaction, so a later rollback restores ACTIVE.
+    public boolean markCheckedOutIfActive(Long cartId);
 }

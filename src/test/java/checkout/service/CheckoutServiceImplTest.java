@@ -17,6 +17,9 @@ import order_item.service.OrderItemManagementService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -37,6 +40,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -119,11 +123,13 @@ class CheckoutServiceImplTest {
         );
 
         InOrder mutationOrder = inOrder(
+                cartManagementService,
                 orderManagementService,
                 orderItemManagementService,
                 productManagementService,
                 cartManagementService
         );
+        mutationOrder.verify(cartManagementService).checkoutCart(CART_ID);
         mutationOrder.verify(orderManagementService).createOrder(
                 USER_ID, CART_ID, expectedSubTotal, SHIPPING_FEE, DISCOUNT_AMOUNT, expectedTotal
         );
@@ -135,7 +141,6 @@ class CheckoutServiceImplTest {
         );
         mutationOrder.verify(productManagementService).decreaseStockQuantity(101L, 2);
         mutationOrder.verify(productManagementService).decreaseStockQuantity(102L, 1);
-        mutationOrder.verify(cartManagementService).checkoutCart(CART_ID);
     }
 
     @Test
@@ -236,7 +241,7 @@ class CheckoutServiceImplTest {
         assertNotNull(exception.getMessage());
         verify(cartItemManagementService).getCartItemsByCartId(CART_ID);
         verifyNoInteractions(shippingStrategy, discountService);
-        verifyNoMutationInteractions();
+        verifyCartWasReservedWithoutOrderMutations();
     }
 
     @Test
@@ -263,7 +268,56 @@ class CheckoutServiceImplTest {
                 exception.getMessage()
         );
         verifyNoInteractions(shippingStrategy, discountService);
-        verifyNoMutationInteractions();
+        verifyCartWasReservedWithoutOrderMutations();
+    }
+
+    @ParameterizedTest(name = "{index}: {0}")
+    @MethodSource("invalidPriceAdjustments")
+    @DisplayName("Checkout rejects invalid shipping or discount values before writing an order")
+    void checkout_invalidPriceAdjustment_stopsBeforeOrderMutation(
+            String scenario,
+            BigDecimal shippingFee,
+            BigDecimal discountAmount,
+            Class<? extends RuntimeException> exceptionType,
+            String expectedMessage
+    ) {
+        // --GIVEN--
+        executeTransactionWorkImmediately();
+        CartItem cartItem = new CartItem(1L, CART_ID, 101L, 1);
+        Product product = createDigitalProduct(101L, "E-book", "100.00", 5);
+        when(cartManagementService.getCartById(CART_ID)).thenReturn(createActiveCart(USER_ID));
+        when(cartItemManagementService.getCartItemsByCartId(CART_ID)).thenReturn(List.of(cartItem));
+        when(cartItemManagementService.validatedCartItemToOrderItem(cartItem)).thenReturn(product);
+        when(shippingStrategy.calculateShippingFee(any())).thenReturn(shippingFee);
+        when(discountService.calculateDiscountAmount(new BigDecimal("100.00")))
+                .thenReturn(discountAmount);
+
+        // --WHEN--
+        RuntimeException exception = assertThrows(
+                exceptionType,
+                () -> checkoutServiceImpl.checkout(USER_ID, CART_ID),
+                scenario
+        );
+
+        // --THEN--
+        assertEquals(expectedMessage, exception.getMessage());
+        verifyCartWasReservedWithoutOrderMutations();
+    }
+
+    static Stream<Arguments> invalidPriceAdjustments()
+    {
+        return Stream.of(
+                Arguments.of("null shipping", null, BigDecimal.ZERO,
+                        NullPointerException.class, "shippingFee is required"),
+                Arguments.of("negative shipping", new BigDecimal("-0.01"), BigDecimal.ZERO,
+                        IllegalArgumentException.class, "shippingFee cannot be negative"),
+                Arguments.of("null discount", BigDecimal.ZERO, null,
+                        NullPointerException.class, "discountAmount is required"),
+                Arguments.of("negative discount", BigDecimal.ZERO, new BigDecimal("-0.01"),
+                        IllegalArgumentException.class, "discountAmount cannot be negative"),
+                Arguments.of("discount exceeds payable amount", BigDecimal.ZERO, new BigDecimal("100.01"),
+                        IllegalArgumentException.class, "discountAmount cannot exceed the payable amount")
+        );
     }
 
     @Test
@@ -312,7 +366,7 @@ class CheckoutServiceImplTest {
                 ORDER_ID, 101L, 2, new BigDecimal("50.00")
         );
         verify(productManagementService).decreaseStockQuantity(101L, 2);
-        verify(cartManagementService, never()).checkoutCart(anyLong());
+        verify(cartManagementService).checkoutCart(CART_ID);
         verify(connection).rollback();
         verify(connection, never()).commit();
         verify(connection).setAutoCommit(true);
@@ -334,6 +388,16 @@ class CheckoutServiceImplTest {
                 productManagementService
         );
         verify(cartManagementService, never()).checkoutCart(anyLong());
+    }
+
+    private void verifyCartWasReservedWithoutOrderMutations()
+    {
+        verify(cartManagementService).checkoutCart(CART_ID);
+        verifyNoInteractions(
+                orderManagementService,
+                orderItemManagementService,
+                productManagementService
+        );
     }
 
     private Cart createActiveCart(Long ownerId)

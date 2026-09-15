@@ -39,81 +39,11 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 
 public class Main {
+    public static String toLowerCase(String s) {
+        return s.toLowerCase();
+    }
     public static void main(String[] args) {
-        // mô tả: user -> tạo cart -> tạo order
-        // tạo database connection trước
-        Connection connection = DatabaseConnection.getConnection();
-        // Repository setting up
-        UserRepository userRepository = new JdbcUserRepository(connection);
-        CartRepository cartRepository = new JdbcCartRepository(connection);
-        CartItemRepository cartItemRepository = new JdbcCartItemRepository(connection);
-        ProductRepository productRepository = new JdbcProductRepository(connection);
-        OrderRepository orderRepository = new JdbcOrderRepository(connection);
-        OrderItemRepository orderItemRepository = new JdbcOrderItemRepository(connection);
-        // cart service setting up
-        CartManagementService cartManagementService = new CartManagementServiceImpl(cartRepository,cartItemRepository);
-        // cart Item service setting up
-        CartItemManagementService cartItemManagementService = new CartItemManagementServiceImpl(cartItemRepository, productRepository);
-        // user service setting up
-        UserManagementService userManageService = new UserManageServiceImpl(userRepository);
-        // product service setting up
-        ProductManagementService productManagementService = new ProductManagementServiceImpl(productRepository);
-        // checkout dependencies
-        ShippingStrategy shippingStrategy = new WeightBasedStrategy(BigDecimal.valueOf(20_000));
-        DiscountService discountService = new DiscountServiceImpl();
-        OrderManagementService orderManagementService = new OrderManagementServiceImpl(orderRepository, shippingStrategy);
-        OrderItemManagementService orderItemManagementService = new OrderItemManagementServiceImpl(
-                orderItemRepository,
-                orderRepository
-        );
-        TransactionManagement transactionManagement = new TransactionManagement(connection);
-        // checkout service setting up
-        CheckoutService checkoutService = new CheckoutServiceImpl(
-                cartManagementService,
-                cartItemManagementService,
-                shippingStrategy,
-                discountService,
-                orderManagementService,
-                orderItemManagementService,
-                productManagementService,
-                transactionManagement
-        );
-        // create product
-        Product product1 = productManagementService.createNewPhysicalProduct(
-                new ProductName("Iphone 16 pro max"),
-                20,
-                BigDecimal.valueOf(20_000_000),
-                BigDecimal.valueOf(0.200)
-        );
-        Product product2 = productManagementService.createNewPhysicalProduct(
-                new ProductName("Macbook pro m1"),
-                50,
-                BigDecimal.valueOf(30_000_000),
-                BigDecimal.valueOf(1.200)
-        );
-        // create user
-        User user = userManageService.createUser(
-                new PasswordHash("abcde123"),
-                new PersonName("Phan Hai Anh"),
-                new PhoneNumber("0346586211"),
-                new Email("haianh2504077@gmail.com"),
-                UserRole.ADMIN
-        );
-        // create cart for the user
-        Cart cart = cartManagementService.createCart(user.getId());
-        // create cart item
-        CartItem cartItem1 = cartItemManagementService.addNewCartItem(
-                cart.getCartId(),
-                product1.getId(),
-                5
-        );
-        CartItem cartItem2 = cartItemManagementService.addNewCartItem(
-                cart.getCartId(),
-                product2.getId(),
-                10
-        );
-        // khi bấm checkout
-        checkoutService.checkout(user.getId(),cart.getCartId());
-
+        String input = "ACBAasdadsC";
+        System.out.println(toLowerCase(input));
     }
 }
