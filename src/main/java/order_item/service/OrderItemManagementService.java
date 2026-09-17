@@ -13,7 +13,7 @@ public interface OrderItemManagementService {
     public void deleteOrderItem(Long orderId, Long productId);
 
 //    get OrderItem
-    public OrderItem getOrderItemById(Long orderId, Long productId);
+    public OrderItem getOrderItem(Long orderId, Long productId);
 
 //    get list of order items by orderId
     public List<OrderItem> getOrderItemsByOrderId(Long orderId);
