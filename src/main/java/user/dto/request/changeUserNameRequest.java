@@ -12,8 +12,8 @@ import lombok.Setter;
 public class changeUserNameRequest {
     @NotBlank(message="New username cannot be blank")
     @Pattern(
-            regexp = "^(0?)(3[2-9]|5[689]|7[06-9]|8[0-689]|9[0-46-9])[0-9]{7}$",
-            message = "Invalid phone number in Vietnam"
+            regexp = "^[\\p{L}]+(?:[ '\\-][\\p{L}]+)*$",
+            message = "Invalid person name"
     )
     private String newUserName;
 }
