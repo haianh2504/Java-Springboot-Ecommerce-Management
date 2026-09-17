@@ -110,10 +110,11 @@ public class ProductManagementServiceImpl implements ProductManagementService{
     @Override
     public void decreaseStockQuantity(Long productId, int decreaseQuantity) {
         Objects.requireNonNull(productId,"Product id cannot be null");
-        if(decreaseQuantity <= 0)
+        if(decreaseQuantity < 0)
         {
             throw new IllegalArgumentException("Product quantity cannot be negative");
         }
+        else if(decreaseQuantity == 0) return;
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
         if(!productRepository.decreaseQuantity(productId, decreaseQuantity))
@@ -129,10 +130,11 @@ public class ProductManagementServiceImpl implements ProductManagementService{
     @Override
     public void increaseStockQuantity(Long productId, int increaseQuantity) {
         Objects.requireNonNull(productId,"Product id cannot be null");
-        if(increaseQuantity <= 0)
+        if(increaseQuantity < 0)
         {
             throw new IllegalArgumentException("Product quantity cannot be negative");
         }
+        else if(increaseQuantity == 0) return;
         if(productRepository.findById(productId).isEmpty()){
             throw new ProductNotFoundException(productId);
         }
