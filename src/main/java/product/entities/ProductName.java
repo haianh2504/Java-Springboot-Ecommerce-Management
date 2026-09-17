@@ -1,42 +1,13 @@
 package product.entities;
 
-public class ProductName {
-    private String name;
-    private boolean isValidName(String name)
-    {
-        if(name == null)
-        {
-            throw new NullPointerException("Name Product cannot be null");
+import java.util.Objects;
+
+public record ProductName(String name) {
+    public ProductName{
+        Objects.requireNonNull(name, "ProductName cannot be null");
+        name = name.trim();
+        if(name.isEmpty()){
+            throw new IllegalArgumentException("ProductName cannot be empty");
         }
-        if(name.trim().isEmpty())
-        {
-            throw new IllegalArgumentException("Name Product cannot be empty");
-        }
-        return true;
-    }
-    //    constructor
-    public ProductName(String name)
-    {
-        if(name == null)
-        {
-            throw new NullPointerException("Name Product cannot be null");
-        }
-        if(name.trim().isEmpty())
-        {
-            throw new IllegalArgumentException("Name Product cannot be empty");
-        }
-        this.name = name.trim();
-    }
-    //    getter
-    public String getName()
-    {
-        return this.name;
-    }
-    //    setter
-    public ProductName setName(String name)
-    {
-        isValidName(name);
-        this.name = name;
-        return this;
     }
 }

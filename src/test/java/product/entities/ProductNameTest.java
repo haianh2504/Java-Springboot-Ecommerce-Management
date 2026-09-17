@@ -15,7 +15,7 @@ public class ProductNameTest {
         void constructProductName_validData() {
             ProductName productName = new ProductName("  Mechanical Keyboard  ");
 
-            Assertions.assertEquals("Mechanical Keyboard", productName.getName());
+            Assertions.assertEquals("Mechanical Keyboard", productName.name());
         }
 
         // Verify that a null product name is rejected with the entity's exact message.
@@ -27,7 +27,7 @@ public class ProductNameTest {
                     () -> new ProductName(null)
             );
 
-            Assertions.assertEquals("Name Product cannot be null", exception.getMessage());
+            Assertions.assertEquals("ProductName cannot be null", exception.getMessage());
         }
 
         // Verify that a blank product name is rejected after whitespace is trimmed.
@@ -39,59 +39,47 @@ public class ProductNameTest {
                     () -> new ProductName("   ")
             );
 
-            Assertions.assertEquals("Name Product cannot be empty", exception.getMessage());
+            Assertions.assertEquals("ProductName cannot be empty", exception.getMessage());
         }
     }
 
     @Nested
-    @DisplayName("Change a product name")
-    class ChangeProductName {
-        // Verify that setName stores valid input and returns the same ProductName instance.
+    @DisplayName("Replace a product name")
+    class ReplaceProductName {
+        // A record is immutable, so changing the value creates a new ProductName.
         @Test
-        @DisplayName("Change a product name using valid data")
-        void setName_validData() {
-            ProductName productName = new ProductName("Keyboard");
-
-            ProductName returnedProductName = productName.setName("Gaming Keyboard");
+        @DisplayName("Create a replacement product name using valid data")
+        void replaceName_validData() {
+            ProductName originalName = new ProductName("Keyboard");
+            ProductName replacementName = new ProductName("Gaming Keyboard");
 
             Assertions.assertAll(
-                    () -> Assertions.assertSame(productName, returnedProductName),
-                    () -> Assertions.assertEquals("Gaming Keyboard", productName.getName())
+                    () -> Assertions.assertEquals("Keyboard", originalName.name()),
+                    () -> Assertions.assertEquals("Gaming Keyboard", replacementName.name()),
+                    () -> Assertions.assertNotSame(originalName, replacementName)
             );
         }
 
-        // Verify that setName rejects null without changing the current product name.
         @Test
-        @DisplayName("Throw NullPointerException when new product name is null")
-        void setName_nullData() {
-            ProductName productName = new ProductName("Keyboard");
-
+        @DisplayName("Throw NullPointerException when replacement name is null")
+        void replaceName_nullData() {
             NullPointerException exception = Assertions.assertThrows(
                     NullPointerException.class,
-                    () -> productName.setName(null)
+                    () -> new ProductName(null)
             );
 
-            Assertions.assertAll(
-                    () -> Assertions.assertEquals("Name Product cannot be null", exception.getMessage()),
-                    () -> Assertions.assertEquals("Keyboard", productName.getName())
-            );
+            Assertions.assertEquals("ProductName cannot be null", exception.getMessage());
         }
 
-        // Verify that setName rejects blank input without changing the current product name.
         @Test
-        @DisplayName("Throw IllegalArgumentException when new product name is blank")
-        void setName_blankData() {
-            ProductName productName = new ProductName("Keyboard");
-
+        @DisplayName("Throw IllegalArgumentException when replacement name is blank")
+        void replaceName_blankData() {
             IllegalArgumentException exception = Assertions.assertThrows(
                     IllegalArgumentException.class,
-                    () -> productName.setName("   ")
+                    () -> new ProductName("   ")
             );
 
-            Assertions.assertAll(
-                    () -> Assertions.assertEquals("Name Product cannot be empty", exception.getMessage()),
-                    () -> Assertions.assertEquals("Keyboard", productName.getName())
-            );
+            Assertions.assertEquals("ProductName cannot be empty", exception.getMessage());
         }
     }
 }

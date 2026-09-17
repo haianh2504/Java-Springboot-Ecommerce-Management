@@ -16,13 +16,13 @@ public class ProductNotFoundException extends ResourceException
         public ProductNotFoundException(ProductName productName)
         {
             super(String.format(
-                    "Product with name [%s] not found", productName.toString()
+                    "Product with name [%s] not found", productName.name()
             ));
         }
         public ProductNotFoundException(ProductName productName, Throwable cause)
         {
             super(String.format(
-                    "Product with name [%s] not found", productName.toString()
+                    "Product with name [%s] not found", productName.name()
             ), cause);
         }
 }

@@ -33,7 +33,7 @@ public final class JdbcProductRepository implements ProductRepository {
                 """;
         try(PreparedStatement ps = connection.prepareStatement(sql))
         {
-            ps.setString(1, product.getName().toString());
+            ps.setString(1, product.getName().name());
             ps.setInt(2, product.getQuantity());
             ps.setBigDecimal(3,product.getBasePrice());
             ps.setString(4,product.getStatus().toString());
@@ -118,7 +118,7 @@ public final class JdbcProductRepository implements ProductRepository {
                 """;
         try(PreparedStatement ps = connection.prepareStatement(sql))
         {
-            ps.setString(1, name.toString());
+            ps.setString(1, name.name());
             try(ResultSet rs = ps.executeQuery())
             {
                 if(!rs.next()){
@@ -157,7 +157,7 @@ public final class JdbcProductRepository implements ProductRepository {
                 """;
         try(PreparedStatement ps = connection.prepareStatement(sql))
         {
-            ps.setString(1, product.getName().toString());
+            ps.setString(1, product.getName().name());
             ps.setInt(2,product.getQuantity());
             ps.setBigDecimal(3, product.getBasePrice());
             ps.setString(4, product.getStatus().toString());
