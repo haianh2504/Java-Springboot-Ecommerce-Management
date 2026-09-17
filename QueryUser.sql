@@ -6,6 +6,41 @@
 -- Không chạy trên database đang chứa dữ liệu cần giữ lại.
 -- ============================================================================
 
+-- ==========================================================================
+-- ONE-TIME PRODUCT MIGRATION
+-- Chỉ chạy riêng block này để nâng cấp database cũ mà không xóa bảng products.
+-- Dữ liệu trong hai cột type và weight sẽ bị xóa vĩnh viễn.
+-- ==========================================================================
+BEGIN;
+
+SET LOCAL search_path TO public;
+
+ALTER TABLE IF EXISTS products
+    DROP CONSTRAINT IF EXISTS ck_products_weight_matches_type;
+
+DROP INDEX IF EXISTS idx_products_status_type;
+
+ALTER TABLE IF EXISTS products
+    DROP COLUMN IF EXISTS weight,
+    DROP COLUMN IF EXISTS type;
+
+DROP TYPE IF EXISTS product_type_enum;
+
+DO $$
+BEGIN
+    IF to_regclass('public.products') IS NOT NULL THEN
+        CREATE INDEX IF NOT EXISTS idx_products_status
+            ON products (status);
+    END IF;
+END
+$$;
+
+COMMIT;
+
+-- ==========================================================================
+-- FULL SCHEMA REBUILD
+-- Chạy từ đây trở xuống chỉ khi muốn xóa và tạo lại toàn bộ schema.
+-- ==========================================================================
 BEGIN;
 
 SET search_path TO public;
@@ -43,11 +78,6 @@ CREATE TYPE product_status_enum AS ENUM (
     'ACTIVE',
     'INACTIVE',
     'ARCHIVED'
-);
-
-CREATE TYPE product_type_enum AS ENUM (
-    'PHYSICAL',
-    'DIGITAL'
 );
 
 CREATE TYPE cart_status_enum AS ENUM (
@@ -101,24 +131,17 @@ CREATE TABLE products (
     quantity        INTEGER NOT NULL DEFAULT 0,
     price           NUMERIC(19, 2) NOT NULL,
     status          product_status_enum NOT NULL DEFAULT 'ACTIVE',
-    type            product_type_enum NOT NULL,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    weight          NUMERIC(10, 3),
 
     CONSTRAINT pk_products PRIMARY KEY (id),
     CONSTRAINT uq_products_name UNIQUE (name),
     CONSTRAINT ck_products_name_not_blank CHECK (btrim(name) <> ''),
     CONSTRAINT ck_products_quantity_non_negative CHECK (quantity >= 0),
-    CONSTRAINT ck_products_price_positive CHECK (price > 0),
-    CONSTRAINT ck_products_weight_matches_type CHECK (
-        (type = 'PHYSICAL' AND weight IS NOT NULL AND weight > 0)
-        OR
-        (type = 'DIGITAL' AND weight IS NULL)
-    )
+    CONSTRAINT ck_products_price_positive CHECK (price > 0)
 );
 
-CREATE INDEX idx_products_status_type
-    ON products (status, type);
+CREATE INDEX idx_products_status
+    ON products (status);
 
 -- ==========================================================================
 -- CARTS
