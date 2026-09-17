@@ -26,11 +26,9 @@ public final class JdbcProductRepository implements ProductRepository {
                 quantity,
                 price,
                 status,
-                type,
-                created_at,
-                weight
+                created_at
                 )
-                VALUES(?,?,?,?,?,?,?)
+                VALUES(?,?,?,?,?)
                 RETURNING id
                 """;
         try(PreparedStatement ps = connection.prepareStatement(sql))
@@ -39,45 +37,18 @@ public final class JdbcProductRepository implements ProductRepository {
             ps.setInt(2, product.getQuantity());
             ps.setBigDecimal(3,product.getBasePrice());
             ps.setString(4,product.getStatus().toString());
-            ps.setString(5,product.getProductType().toString());
-            ps.setTimestamp(6,java.sql.Timestamp.from(product.getCreatedAt()));
-            // thuộc tính riêng của physical product
-            if(product instanceof PhysicalProduct)
-            {
-                ps.setBigDecimal(7,((PhysicalProduct) product).getWeight());
-                // Thực thi câu lệnh INSERT xuống Postgre
-                try(ResultSet rs = ps.executeQuery())
-                {
-                    if(!rs.next()){
-                        throw new SQLException("Saving and return product failed");
-                    }
-                    return new PhysicalProduct(
-                            rs.getLong("id"),
-                            product.getName(),
-                            product.getQuantity(),
-                            product.getBasePrice(),
-                            product.getStatus(),
-                            product.getProductType(),
-                            product.getCreatedAt(),
-                            ((PhysicalProduct) product).getWeight()
-                    );
-                }
-            }
-            // if being digital product
-            ps.setNull(7, Types.DECIMAL);
-            // Thực thi câu lệnh INSERT xuống Postgre
+            ps.setTimestamp(5,java.sql.Timestamp.from(product.getCreatedAt()));
             try(ResultSet rs = ps.executeQuery())
             {
                 if(!rs.next()){
                     throw new SQLException("Saving and return product failed");
                 }
-                return new DigitalProduct(
+                return new Product(
                         rs.getLong("id"),
                         product.getName(),
                         product.getQuantity(),
                         product.getBasePrice(),
                         product.getStatus(),
-                        product.getProductType(),
                         product.getCreatedAt()
                 );
             }
@@ -97,9 +68,7 @@ public final class JdbcProductRepository implements ProductRepository {
                 quantity,
                 price,
                 status,
-                type,
-                created_at,
-                weight
+                created_at
                 FROM products
                 WHERE id = ?
                 """;
@@ -118,35 +87,15 @@ public final class JdbcProductRepository implements ProductRepository {
                 int quantity = rs.getInt("quantity");
                 BigDecimal price = rs.getBigDecimal("price");
                 ProductStatus status = ProductStatus.valueOf(rs.getString("status"));
-                ProductType type = ProductType.valueOf(rs.getString("type"));
                 Instant created_at = rs.getTimestamp("created_at").toInstant();
-                BigDecimal weight = rs.getBigDecimal("weight");
-                Product data;
-                if(weight != null)
-                {
-                    data = new PhysicalProduct(
-                            productId,
-                            name,
-                            quantity,
-                            price,
-                            status,
-                            type,
-                            created_at,
-                            weight
-                    );
-                }
-                else{
-                    data = new DigitalProduct(
-                            productId,
-                            name,
-                            quantity,
-                            price,
-                            status,
-                            type,
-                            created_at
-                    );
-                }
-                return Optional.of(data);
+                return Optional.of(new Product(
+                        productId,
+                        name,
+                        quantity,
+                        price,
+                        status,
+                        created_at
+                ));
             }
         }catch(SQLException e)
         {
@@ -164,8 +113,6 @@ public final class JdbcProductRepository implements ProductRepository {
                 quantity,
                 price,
                 status,
-                type,
-                weight,
                 created_at
                 FROM products WHERE name = ?
                 """;
@@ -180,34 +127,16 @@ public final class JdbcProductRepository implements ProductRepository {
                 Long id = rs.getLong("id");
                 int quantity = rs.getInt("quantity");
                 BigDecimal price = rs.getBigDecimal("price");
-                ProductType type = ProductType.valueOf(rs.getString("type"));
                 Instant created_at = rs.getTimestamp("created_at").toInstant();
                 ProductStatus status = ProductStatus.valueOf(rs.getString("status"));
-                BigDecimal weight = rs.getBigDecimal("weight");
-                if(type == ProductType.PHYSICAL)
-                {
-                    return Optional.of(new PhysicalProduct(
-                            id,
-                            name,
-                            quantity,
-                            price,
-                            status,
-                            type,
-                            created_at,
-                            weight
-                    ));
-                }
-                else{
-                    return Optional.of(new DigitalProduct(
-                            id,
-                            name,
-                            quantity,
-                            price,
-                            status,
-                            type,
-                            created_at
-                    ));
-                }
+                return Optional.of(new Product(
+                        id,
+                        name,
+                        quantity,
+                        price,
+                        status,
+                        created_at
+                ));
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error while searching for product: " + e.getMessage(),e);
@@ -223,8 +152,7 @@ public final class JdbcProductRepository implements ProductRepository {
                 name = ?,
                 quantity = ?,
                 price = ?,
-                status = ?,
-                weight = ?
+                status = ?
                 WHERE id = ?;
                 """;
         try(PreparedStatement ps = connection.prepareStatement(sql))
@@ -233,14 +161,7 @@ public final class JdbcProductRepository implements ProductRepository {
             ps.setInt(2,product.getQuantity());
             ps.setBigDecimal(3, product.getBasePrice());
             ps.setString(4, product.getStatus().toString());
-            if(product instanceof PhysicalProduct physicalProduct)
-            {
-                ps.setBigDecimal(5,physicalProduct.getWeight());
-            }
-            else{
-                ps.setNull(5, Types.DECIMAL);
-            }
-            ps.setLong(6, product.getId());
+            ps.setLong(5, product.getId());
             ps.executeUpdate();
         }catch (SQLException e)
         {

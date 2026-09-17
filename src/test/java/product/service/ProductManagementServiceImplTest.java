@@ -3,965 +3,191 @@ package product.service;
 import exception.business.detailed_exceptions.InsufficientStockException;
 import exception.business.detailed_exceptions.ProductNameAlreadyInUseException;
 import exception.resource.detailed_exceptions.ProductNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import product.entities.*;
+import product.entities.Product;
+import product.entities.ProductName;
+import product.entities.ProductStatus;
 import product.repository.ProductRepository;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ProductManagementServiceImplTest {
+class ProductManagementServiceImplTest {
+    private static final Long PRODUCT_ID = 1L;
+    private static final ProductName NAME = new ProductName("Mechanical Keyboard");
+    private static final BigDecimal PRICE = new BigDecimal("89.99");
+
     @Mock
     private ProductRepository productRepository;
 
-    @InjectMocks
-    private ProductManagementServiceImpl productManagementServiceImpl;
+    private ProductManagementServiceImpl service;
 
-    // helper functions
-    private Product createPersistedPhysicalProduct()
-    {
-        return new PhysicalProduct(
-                1L,
-                new ProductName("Mechanical Keyboard"),
-                10,
-                new BigDecimal("89.99"),
-                ProductStatus.INACTIVE,
-                ProductType.PHYSICAL,
-                Instant.parse("2026-09-10T00:00:00Z"),
-                new BigDecimal("1.25")
-        );
+    @BeforeEach
+    void setUp() {
+        service = new ProductManagementServiceImpl(productRepository);
     }
 
-    private Product createPersistedDigitalProduct()
-    {
-        return new DigitalProduct(
-                2L,
-                new ProductName("Java E-Book"),
-                100,
-                new BigDecimal("29.99"),
-                ProductStatus.INACTIVE,
-                ProductType.DIGITAL,
+    private Product persistedProduct() {
+        return new Product(
+                PRODUCT_ID, NAME, 10, PRICE, ProductStatus.ACTIVE,
                 Instant.parse("2026-09-10T00:00:00Z")
         );
     }
 
-    // Create Physical Product with valid arguments -> save and return Product
     @Test
-    @DisplayName("Create a physical product with valid arguments, then save and return the persisted product")
-    void createPhysicalProduct_validArguments_savesAndReturnsProduct()
-    {
-        // --GIVEN--
-        ProductName name = new ProductName("Mechanical Keyboard");
-        int stockQuantity = 10;
-        BigDecimal basePrice = new BigDecimal("89.99");
-        BigDecimal weight = new BigDecimal("1.25");
-        Product savedProduct = createPersistedPhysicalProduct();
-        when(productRepository.findByName(name)).thenReturn(Optional.empty());
-        when(productRepository.save(any(Product.class))).thenReturn(savedProduct);
+    @DisplayName("Create a product with valid values")
+    void createProduct_validValues_savesProduct() {
+        Product saved = persistedProduct();
+        when(productRepository.findByName(NAME)).thenReturn(Optional.empty());
+        when(productRepository.save(any(Product.class))).thenReturn(saved);
 
-        // --WHEN--
-        Product actualProduct = productManagementServiceImpl.createNewPhysicalProduct(
-                name, stockQuantity, basePrice, weight
-        );
+        Product actual = service.createProduct(NAME, 10, PRICE);
 
-        // --THEN--
-        assertAll(
-                () -> assertSame(savedProduct, actualProduct),
-                () -> assertEquals(1L, actualProduct.getId()),
-                () -> assertInstanceOf(PhysicalProduct.class, actualProduct),
-                () -> assertSame(ProductStatus.INACTIVE, actualProduct.getStatus()),
-                () -> assertSame(ProductType.PHYSICAL, actualProduct.getProductType())
-        );
-        verify(productRepository).findByName(name);
+        assertSame(saved, actual);
         verify(productRepository).save(argThat(product ->
-                product instanceof PhysicalProduct physicalProduct
-                        && product.getId() == null
-                        && product.getName() == name
-                        && product.getQuantity() == stockQuantity
-                        && product.getBasePrice().compareTo(basePrice) == 0
+                product.getId() == null
+                        && product.getName().equals(NAME)
+                        && product.getQuantity() == 10
+                        && product.getBasePrice().compareTo(PRICE) == 0
                         && product.getStatus() == ProductStatus.INACTIVE
-                        && product.getProductType() == ProductType.PHYSICAL
-                        && physicalProduct.getWeight().compareTo(weight) == 0
         ));
     }
 
-    // Create Physical product with existing name -> throw ProductNameAlreadyInUse
     @Test
-    @DisplayName("Create a physical product with an existing name throws ProductNameAlreadyInUseException")
-    void createPhysicalProduct_existingName_throwsProductNameAlreadyInUseException()
-    {
-        // --GIVEN--
-        Product existingProduct = createPersistedPhysicalProduct();
-        ProductName name = existingProduct.getName();
-        when(productRepository.findByName(name)).thenReturn(Optional.of(existingProduct));
+    @DisplayName("Reject a duplicate product name")
+    void createProduct_duplicateName_throwsException() {
+        when(productRepository.findByName(NAME)).thenReturn(Optional.of(persistedProduct()));
 
-        // --WHEN--
-        ProductNameAlreadyInUseException exception = assertThrows(
-                ProductNameAlreadyInUseException.class,
-                () -> productManagementServiceImpl.createNewPhysicalProduct(
-                        name, 10, new BigDecimal("89.99"), new BigDecimal("1.25")
-                )
-        );
-
-        // --THEN--
-        assertEquals("This product name has already been used", exception.getMessage());
-        verify(productRepository).findByName(name);
-        verify(productRepository, never()).save(any(Product.class));
+        assertThrows(ProductNameAlreadyInUseException.class,
+                () -> service.createProduct(NAME, 10, PRICE));
+        verify(productRepository, never()).save(any());
     }
 
-    // Create Physical Product with negative stock quantity -> throw IllegalArgumentException
     @Test
-    @DisplayName("Create a physical product with negative stock quantity throws IllegalArgumentException")
-    void createPhysicalProduct_negativeStockQuantity_throwsIllegalArgumentException()
-    {
-        // --GIVEN--
-        ProductName name = new ProductName("Mechanical Keyboard");
-        int invalidStockQuantity = -1;
-
-        // --WHEN--
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> productManagementServiceImpl.createNewPhysicalProduct(
-                        name, invalidStockQuantity, new BigDecimal("89.99"), new BigDecimal("1.25")
-                )
-        );
-
-        // --THEN--
-        assertEquals("Invalid stock quantity", exception.getMessage());
-        verifyNoInteractions(productRepository);
-    }
-
-    // Create physical product with invalid base price -> throw Illegal argument exception
-    @Test
-    @DisplayName("Create a physical product with a non-positive base price throws IllegalArgumentException")
-    void createPhysicalProduct_nonPositiveBasePrice_throwsIllegalArgumentException()
-    {
-        // --GIVEN--
-        ProductName name = new ProductName("Mechanical Keyboard");
-        BigDecimal invalidBasePrice = BigDecimal.ZERO;
-
-        // --WHEN--
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> productManagementServiceImpl.createNewPhysicalProduct(
-                        name, 10, invalidBasePrice, new BigDecimal("1.25")
-                )
-        );
-
-        // --THEN--
-        assertEquals("Product base price has to be bigger than Zero", exception.getMessage());
-        verifyNoInteractions(productRepository);
-    }
-
-    // Create physical product with null arguments ( using ParameterizedTest and Stream )
-    @ParameterizedTest(name = "{index}: null {0}")
-    @MethodSource("nullPhysicalProductArguments")
-    @DisplayName("Create a physical product with a null required argument throws NullPointerException")
-    void createPhysicalProduct_nullRequiredArgument_throwsNullPointerException(
-            String nullArgument, ProductName name, BigDecimal basePrice,
-            BigDecimal weight, String expectedMessage)
-    {
-        // --GIVEN--
-        // Arguments are supplied by nullPhysicalProductArguments().
-
-        // --WHEN--
-        NullPointerException exception = assertThrows(
-                NullPointerException.class,
-                () -> productManagementServiceImpl.createNewPhysicalProduct(name, 10, basePrice, weight)
-        );
-
-        // --THEN--
-        assertEquals(expectedMessage, exception.getMessage());
-        verifyNoInteractions(productRepository);
-    }
-
-    static Stream<Arguments> nullPhysicalProductArguments()
-    {
-        ProductName name = new ProductName("Mechanical Keyboard");
-        BigDecimal basePrice = new BigDecimal("89.99");
-        BigDecimal weight = new BigDecimal("1.25");
-
-        return Stream.of(
-                Arguments.of("name", null, basePrice, weight, "Product name cannot be null"),
-                Arguments.of("base price", name, null, weight, "Product base price cannot be null"),
-                Arguments.of("weight", name, basePrice, null, "Product weight cannot be null")
-        );
-    }
-
-    // Create physical product with invalid weight -> throw exception
-    @Test
-    @DisplayName("Create a physical product with a non-positive weight throws IllegalArgumentException")
-    void createPhysicalProduct_nonPositiveWeight_throwsIllegalArgumentException()
-    {
-        // --GIVEN--
-        ProductName name = new ProductName("Mechanical Keyboard");
-        BigDecimal invalidWeight = BigDecimal.ZERO;
-
-        // --WHEN--
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> productManagementServiceImpl.createNewPhysicalProduct(
-                        name, 10, new BigDecimal("89.99"), invalidWeight
-                )
-        );
-
-        // --THEN--
-        assertEquals("Product weight has to be bigger than Zero", exception.getMessage());
-        verifyNoInteractions(productRepository);
-    }
-
-    // Create digital Product with valid arguments -> save and return Product
-    @Test
-    @DisplayName("Create a digital product with valid arguments, then save and return the persisted product")
-    void createDigitalProduct_validArguments_savesAndReturnsProduct()
-    {
-        // --GIVEN--
-        ProductName name = new ProductName("Java E-Book");
-        int stockQuantity = 100;
-        BigDecimal basePrice = new BigDecimal("29.99");
-        Product savedProduct = createPersistedDigitalProduct();
-        when(productRepository.findByName(name)).thenReturn(Optional.empty());
-        when(productRepository.save(any(Product.class))).thenReturn(savedProduct);
-
-        // --WHEN--
-        Product actualProduct = productManagementServiceImpl.createNewDigitalProduct(
-                name, stockQuantity, basePrice
-        );
-
-        // --THEN--
+    @DisplayName("Reject invalid values when creating a product")
+    void createProduct_invalidValues_throwsException() {
         assertAll(
-                () -> assertSame(savedProduct, actualProduct),
-                () -> assertEquals(2L, actualProduct.getId()),
-                () -> assertInstanceOf(DigitalProduct.class, actualProduct),
-                () -> assertSame(ProductStatus.INACTIVE, actualProduct.getStatus()),
-                () -> assertSame(ProductType.DIGITAL, actualProduct.getProductType())
-        );
-        verify(productRepository).findByName(name);
-        verify(productRepository).save(argThat(product ->
-                product instanceof DigitalProduct
-                        && product.getId() == null
-                        && product.getName() == name
-                        && product.getQuantity() == stockQuantity
-                        && product.getBasePrice().compareTo(basePrice) == 0
-                        && product.getStatus() == ProductStatus.INACTIVE
-                        && product.getProductType() == ProductType.DIGITAL
-        ));
-    }
-
-    // Create digital product with existing name -> throw ProductNameAlreadyInUse
-    @Test
-    @DisplayName("Create a digital product with an existing name throws ProductNameAlreadyInUseException")
-    void createDigitalProduct_existingName_throwsProductNameAlreadyInUseException()
-    {
-        // --GIVEN--
-        Product existingProduct = createPersistedDigitalProduct();
-        ProductName name = existingProduct.getName();
-        when(productRepository.findByName(name)).thenReturn(Optional.of(existingProduct));
-
-        // --WHEN--
-        ProductNameAlreadyInUseException exception = assertThrows(
-                ProductNameAlreadyInUseException.class,
-                () -> productManagementServiceImpl.createNewDigitalProduct(
-                        name, 100, new BigDecimal("29.99")
-                )
-        );
-
-        // --THEN--
-        assertEquals("This product name has already been used", exception.getMessage());
-        verify(productRepository).findByName(name);
-        verify(productRepository, never()).save(any(Product.class));
-    }
-
-    // Create digital Product with negative stock quantity -> throw IllegalArgumentException
-    @Test
-    @DisplayName("Create a digital product with negative stock quantity throws IllegalArgumentException")
-    void createDigitalProduct_negativeStockQuantity_throwsIllegalArgumentException()
-    {
-        // --GIVEN--
-        ProductName name = new ProductName("Java E-Book");
-        int invalidStockQuantity = -1;
-
-        // --WHEN--
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> productManagementServiceImpl.createNewDigitalProduct(
-                        name, invalidStockQuantity, new BigDecimal("29.99")
-                )
-        );
-
-        // --THEN--
-        assertEquals("Product quantity cannot be negative", exception.getMessage());
-        verifyNoInteractions(productRepository);
-    }
-
-    // Create digital product with invalid base price -> throw Illegal argument exception
-    @Test
-    @DisplayName("Create a digital product with a non-positive base price throws IllegalArgumentException")
-    void createDigitalProduct_nonPositiveBasePrice_throwsIllegalArgumentException()
-    {
-        // --GIVEN--
-        ProductName name = new ProductName("Java E-Book");
-        BigDecimal invalidBasePrice = BigDecimal.ZERO;
-
-        // --WHEN--
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> productManagementServiceImpl.createNewDigitalProduct(name, 100, invalidBasePrice)
-        );
-
-        // --THEN--
-        assertEquals("Product base price has to be bigger than Zero", exception.getMessage());
-        verifyNoInteractions(productRepository);
-    }
-
-    // Create digital product with null arguments ( using ParameterizedTest and Stream )
-    @ParameterizedTest(name = "{index}: null {0}")
-    @MethodSource("nullDigitalProductArguments")
-    @DisplayName("Create a digital product with a null required argument throws NullPointerException")
-    void createDigitalProduct_nullRequiredArgument_throwsNullPointerException(
-            String nullArgument, ProductName name, BigDecimal basePrice, String expectedMessage)
-    {
-        // --GIVEN--
-        // Arguments are supplied by nullDigitalProductArguments().
-
-        // --WHEN--
-        NullPointerException exception = assertThrows(
-                NullPointerException.class,
-                () -> productManagementServiceImpl.createNewDigitalProduct(name, 100, basePrice)
-        );
-
-        // --THEN--
-        assertEquals(expectedMessage, exception.getMessage());
-        verifyNoInteractions(productRepository);
-    }
-
-    static Stream<Arguments> nullDigitalProductArguments()
-    {
-        ProductName name = new ProductName("Java E-Book");
-        BigDecimal basePrice = new BigDecimal("29.99");
-
-        return Stream.of(
-                Arguments.of("name", null, basePrice, "Product name cannot be null"),
-                Arguments.of("base price", name, null, "Product base price cannot be null")
+                () -> assertThrows(NullPointerException.class,
+                        () -> service.createProduct(null, 10, PRICE)),
+                () -> assertThrows(IllegalArgumentException.class,
+                        () -> service.createProduct(NAME, -1, PRICE)),
+                () -> assertThrows(NullPointerException.class,
+                        () -> service.createProduct(NAME, 10, null)),
+                () -> assertThrows(IllegalArgumentException.class,
+                        () -> service.createProduct(NAME, 10, BigDecimal.ZERO))
         );
     }
 
-    // Find product with valid Id provided -> return product
     @Test
-    @DisplayName("Find a product with a valid ID returns the persisted product")
-    void findProductById_validId_returnsPersistedProduct()
-    {
-        // --GIVEN--
-        Long productId = 1L;
-        Product persistedProduct = createPersistedPhysicalProduct();
-        when(productRepository.findById(productId)).thenReturn(Optional.of(persistedProduct));
+    @DisplayName("Find products by id and name")
+    void findProduct_existingProduct_returnsProduct() {
+        Product product = persistedProduct();
+        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
+        when(productRepository.findByName(NAME)).thenReturn(Optional.of(product));
 
-        // --WHEN--
-        Product actualProduct = productManagementServiceImpl.findProductById(productId);
-
-        // --THEN--
-        assertSame(persistedProduct, actualProduct);
-        verify(productRepository).findById(productId);
-    }
-
-    // Find product but productId not found -> return ProductNotFoundException
-    @Test
-    @DisplayName("Find a product with an unknown ID throws ProductNotFoundException")
-    void findProductById_unknownId_throwsProductNotFoundException()
-    {
-        // --GIVEN--
-        Long productId = 99L;
-        when(productRepository.findById(productId)).thenReturn(Optional.empty());
-
-        // --WHEN--
-        ProductNotFoundException exception = assertThrows(
-                ProductNotFoundException.class,
-                () -> productManagementServiceImpl.findProductById(productId)
-        );
-
-        // --THEN--
-        assertEquals("Product with id 99 not found", exception.getMessage());
-        verify(productRepository).findById(productId);
-    }
-
-    // Find product but Id is null -> return null pointer exception
-    @Test
-    @DisplayName("Find a product with a null ID throws NullPointerException")
-    void findProductById_nullId_throwsNullPointerException()
-    {
-        // --GIVEN--
-        Long productId = null;
-
-        // --WHEN--
-        NullPointerException exception = assertThrows(
-                NullPointerException.class,
-                () -> productManagementServiceImpl.findProductById(productId)
-        );
-
-        // --THEN--
-        assertEquals("Product id cannot be null", exception.getMessage());
-        verifyNoInteractions(productRepository);
-    }
-
-    // Find product with valid name provided and return persisted product
-    @Test
-    @DisplayName("Find a product with a valid name returns the persisted product")
-    void findProductByName_validName_returnsPersistedProduct()
-    {
-        // --GIVEN--
-        Product persistedProduct = createPersistedPhysicalProduct();
-        ProductName productName = persistedProduct.getName();
-        when(productRepository.findByName(productName)).thenReturn(Optional.of(persistedProduct));
-
-        // --WHEN--
-        Product actualProduct = productManagementServiceImpl.findProductByName(productName);
-
-        // --THEN--
-        assertSame(persistedProduct, actualProduct);
-        verify(productRepository).findByName(productName);
-    }
-
-    // Find product with valid name provided but not found, throw ProductNotFoundException
-    @Test
-    @DisplayName("Find a product with an unknown name throws ProductNotFoundException")
-    void findProductByName_unknownName_throwsProductNotFoundException()
-    {
-        // --GIVEN--
-        ProductName productName = new ProductName("Unknown Product");
-        when(productRepository.findByName(productName)).thenReturn(Optional.empty());
-
-        // --WHEN--
-        ProductNotFoundException exception = assertThrows(
-                ProductNotFoundException.class,
-                () -> productManagementServiceImpl.findProductByName(productName)
-        );
-
-        // --THEN--
-        assertEquals("Product with name [" + productName + "] not found", exception.getMessage());
-        verify(productRepository).findByName(productName);
-    }
-
-    // Find product with null name, throw NullPointerException
-    @Test
-    @DisplayName("Find a product with a null name throws NullPointerException")
-    void findProductByName_nullName_throwsNullPointerException()
-    {
-        // --GIVEN--
-        ProductName productName = null;
-
-        // --WHEN--
-        NullPointerException exception = assertThrows(
-                NullPointerException.class,
-                () -> productManagementServiceImpl.findProductByName(productName)
-        );
-
-        // --THEN--
-        assertEquals("Product name cannot be null", exception.getMessage());
-        verifyNoInteractions(productRepository);
-    }
-
-    // Update product with valid name successfully
-    @Test
-    @DisplayName("Update an existing product with a valid new name successfully")
-    void updateProductName_validArguments_updatesProduct()
-    {
-        // --GIVEN--
-        Product persistedProduct = createPersistedPhysicalProduct();
-        Long productId = persistedProduct.getId();
-        ProductName newName = new ProductName("Wireless Mechanical Keyboard");
-        when(productRepository.findById(productId)).thenReturn(Optional.of(persistedProduct));
-
-        // --WHEN--
-        productManagementServiceImpl.updateProductName(productId, newName);
-
-        // --THEN--
-        assertSame(newName, persistedProduct.getName());
-        verify(productRepository).findById(productId);
-        verify(productRepository).update(persistedProduct);
-    }
-
-    // Update product name but product not found, throw ProductNotFoundException
-    @Test
-    @DisplayName("Update the name of an unknown product throws ProductNotFoundException")
-    void updateProductName_unknownProduct_throwsProductNotFoundException()
-    {
-        // --GIVEN--
-        Long productId = 99L;
-        ProductName newName = new ProductName("Wireless Mechanical Keyboard");
-        when(productRepository.findById(productId)).thenReturn(Optional.empty());
-
-        // --WHEN--
-        ProductNotFoundException exception = assertThrows(
-                ProductNotFoundException.class,
-                () -> productManagementServiceImpl.updateProductName(productId, newName)
-        );
-
-        // --THEN--
-        assertEquals("Product with id 99 not found", exception.getMessage());
-        verify(productRepository).findById(productId);
-        verify(productRepository, never()).update(any(Product.class));
-    }
-
-    // Update product but null arguments, throw NullPointerException ( use ParameterizedTest and Stream )
-    @ParameterizedTest(name = "{index}: null {0}")
-    @MethodSource("nullUpdateProductNameArguments")
-    @DisplayName("Update a product name with a null required argument throws NullPointerException")
-    void updateProductName_nullRequiredArgument_throwsNullPointerException(
-            String nullArgument, Long productId, ProductName newName, String expectedMessage)
-    {
-        // --GIVEN--
-        // Arguments are supplied by nullUpdateProductNameArguments().
-
-        // --WHEN--
-        NullPointerException exception = assertThrows(
-                NullPointerException.class,
-                () -> productManagementServiceImpl.updateProductName(productId, newName)
-        );
-
-        // --THEN--
-        assertEquals(expectedMessage, exception.getMessage());
-        verifyNoInteractions(productRepository);
-    }
-
-    static Stream<Arguments> nullUpdateProductNameArguments()
-    {
-        return Stream.of(
-                Arguments.of("product ID", null, new ProductName("New Product Name"),
-                        "ProductId cannot be null"),
-                Arguments.of("new name", 1L, null, "Product name cannot be null")
+        assertAll(
+                () -> assertSame(product, service.findProductById(PRODUCT_ID)),
+                () -> assertSame(product, service.findProductByName(NAME))
         );
     }
 
-    // Update product weight with valid weight successfully
     @Test
-    @DisplayName("Update an existing physical product with a valid new weight successfully")
-    void updateProductWeight_validArguments_updatesPhysicalProduct()
-    {
-        // --GIVEN--
-        PhysicalProduct persistedProduct = (PhysicalProduct) createPersistedPhysicalProduct();
-        Long productId = persistedProduct.getId();
-        BigDecimal newWeight = new BigDecimal("2.50");
-        when(productRepository.findById(productId)).thenReturn(Optional.of(persistedProduct));
+    @DisplayName("Throw when a product does not exist")
+    void findProductById_unknownProduct_throwsException() {
+        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.empty());
 
-        // --WHEN--
-        productManagementServiceImpl.updateProductWeight(productId, newWeight);
-
-        // --THEN--
-        assertEquals(0, newWeight.compareTo(persistedProduct.getWeight()));
-        verify(productRepository).findById(productId);
-        verify(productRepository).update(persistedProduct);
+        assertThrows(ProductNotFoundException.class, () -> service.findProductById(PRODUCT_ID));
     }
 
-    // Update product weight but product not found, throw ProductNotFoundException
     @Test
-    @DisplayName("Update the weight of an unknown product throws ProductNotFoundException")
-    void updateProductWeight_unknownProduct_throwsProductNotFoundException()
-    {
-        // --GIVEN--
-        Long productId = 99L;
-        BigDecimal newWeight = new BigDecimal("2.50");
-        when(productRepository.findById(productId)).thenReturn(Optional.empty());
+    @DisplayName("Update a product name")
+    void updateProductName_validName_updatesProduct() {
+        Product product = persistedProduct();
+        ProductName newName = new ProductName("Wireless Keyboard");
+        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
 
-        // --WHEN--
-        ProductNotFoundException exception = assertThrows(
-                ProductNotFoundException.class,
-                () -> productManagementServiceImpl.updateProductWeight(productId, newWeight)
-        );
+        service.updateProductName(PRODUCT_ID, newName);
 
-        // --THEN--
-        assertEquals("Product with id 99 not found", exception.getMessage());
-        verify(productRepository).findById(productId);
-        verify(productRepository, never()).update(any(Product.class));
+        assertEquals(newName, product.getName());
+        verify(productRepository).update(product);
     }
 
-    // Update product weight but for wrong type of product, throw IllegalStateException
     @Test
-    @DisplayName("Update the weight of a digital product throws IllegalStateException")
-    void updateProductWeight_digitalProduct_throwsIllegalStateException()
-    {
-        // --GIVEN--
-        Product digitalProduct = createPersistedDigitalProduct();
-        Long productId = digitalProduct.getId();
-        BigDecimal newWeight = new BigDecimal("2.50");
-        when(productRepository.findById(productId)).thenReturn(Optional.of(digitalProduct));
+    @DisplayName("Update a product price")
+    void updateBasePrice_validPrice_updatesProduct() {
+        Product product = persistedProduct();
+        BigDecimal newPrice = new BigDecimal("99.99");
+        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
 
-        // --WHEN--
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
-                () -> productManagementServiceImpl.updateProductWeight(productId, newWeight)
-        );
+        service.updateBasePrice(PRODUCT_ID, newPrice);
 
-        // --THEN--
-        assertEquals("Digital Product do not have weight", exception.getMessage());
-        verify(productRepository).findById(productId);
-        verify(productRepository, never()).update(any(Product.class));
+        assertEquals(newPrice, product.getBasePrice());
+        verify(productRepository).update(product);
     }
 
-    // Update product weight with same value, update not working
     @Test
-    @DisplayName("Update a physical product with the same weight does not call repository update")
-    void updateProductWeight_sameWeight_doesNotUpdateProduct()
-    {
-        // --GIVEN--
-        PhysicalProduct persistedProduct = (PhysicalProduct) createPersistedPhysicalProduct();
-        Long productId = persistedProduct.getId();
-        BigDecimal sameWeight = new BigDecimal("1.250");
-        when(productRepository.findById(productId)).thenReturn(Optional.of(persistedProduct));
+    @DisplayName("Do not persist an unchanged product price")
+    void updateBasePrice_samePrice_doesNotUpdate() {
+        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(persistedProduct()));
 
-        // --WHEN--
-        productManagementServiceImpl.updateProductWeight(productId, sameWeight);
+        service.updateBasePrice(PRODUCT_ID, PRICE);
 
-        // --THEN--
-        assertEquals(0, sameWeight.compareTo(persistedProduct.getWeight()));
-        verify(productRepository).findById(productId);
-        verify(productRepository, never()).update(any(Product.class));
+        verify(productRepository, never()).update(any());
     }
 
-    // Update product weight with null arguments, throw NullPointerException ( using ParameterizedTest and Stream )
-    @ParameterizedTest(name = "{index}: null {0}")
-    @MethodSource("nullUpdateProductWeightArguments")
-    @DisplayName("Update a product weight with a null required argument throws NullPointerException")
-    void updateProductWeight_nullRequiredArgument_throwsNullPointerException(
-            String nullArgument, Long productId, BigDecimal newWeight, String expectedMessage)
-    {
-        // --GIVEN--
-        // Arguments are supplied by nullUpdateProductWeightArguments().
-
-        // --WHEN--
-        NullPointerException exception = assertThrows(
-                NullPointerException.class,
-                () -> productManagementServiceImpl.updateProductWeight(productId, newWeight)
-        );
-
-        // --THEN--
-        assertEquals(expectedMessage, exception.getMessage());
-        verifyNoInteractions(productRepository);
-    }
-
-    static Stream<Arguments> nullUpdateProductWeightArguments()
-    {
-        return Stream.of(
-                Arguments.of("product ID", null, new BigDecimal("2.50"), "ProductId cannot be null"),
-                Arguments.of("new weight", 1L, null, "Product new weight cannot be null")
-        );
-    }
-
-    // Update product base price with valid arguments successfully
     @Test
-    @DisplayName("Update an existing product with a valid new base price successfully")
-    void updateBasePrice_validArguments_updatesProduct()
-    {
-        // --GIVEN--
-        Product persistedProduct = createPersistedPhysicalProduct();
-        Long productId = persistedProduct.getId();
-        BigDecimal newBasePrice = new BigDecimal("99.99");
-        when(productRepository.findById(productId)).thenReturn(Optional.of(persistedProduct));
+    @DisplayName("Activate and deactivate a product")
+    void changeProductStatus_validProduct_updatesProduct() {
+        Product product = persistedProduct();
+        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
 
-        // --WHEN--
-        productManagementServiceImpl.updateBasePrice(productId, newBasePrice);
+        service.deactivateProduct(PRODUCT_ID);
+        assertEquals(ProductStatus.INACTIVE, product.getStatus());
+        service.activateProduct(PRODUCT_ID);
 
-        // --THEN--
-        assertEquals(0, newBasePrice.compareTo(persistedProduct.getBasePrice()));
-        verify(productRepository).findById(productId);
-        verify(productRepository).update(persistedProduct);
+        assertEquals(ProductStatus.ACTIVE, product.getStatus());
+        verify(productRepository, times(2)).update(product);
     }
 
-    // Update product base price but product not found, throw ProductNotFoundException
     @Test
-    @DisplayName("Update the base price of an unknown product throws ProductNotFoundException")
-    void updateBasePrice_unknownProduct_throwsProductNotFoundException()
-    {
-        // --GIVEN--
-        Long productId = 99L;
-        BigDecimal newBasePrice = new BigDecimal("99.99");
-        when(productRepository.findById(productId)).thenReturn(Optional.empty());
+    @DisplayName("Decrease available stock atomically")
+    void decreaseStockQuantity_availableStock_decreasesStock() {
+        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(persistedProduct()));
+        when(productRepository.decreaseQuantity(PRODUCT_ID, 2)).thenReturn(true);
 
-        // --WHEN--
-        ProductNotFoundException exception = assertThrows(
-                ProductNotFoundException.class,
-                () -> productManagementServiceImpl.updateBasePrice(productId, newBasePrice)
-        );
+        service.decreaseStockQuantity(PRODUCT_ID, 2);
 
-        // --THEN--
-        assertEquals("Product with id 99 not found", exception.getMessage());
-        verify(productRepository).findById(productId);
-        verify(productRepository, never()).update(any(Product.class));
+        verify(productRepository).decreaseQuantity(PRODUCT_ID, 2);
     }
 
-    // Update product base price with same value, update not working
     @Test
-    @DisplayName("Update a product with the same base price does not call repository update")
-    void updateBasePrice_sameValue_doesNotUpdateProduct()
-    {
-        // --GIVEN--
-        Product persistedProduct = createPersistedPhysicalProduct();
-        Long productId = persistedProduct.getId();
-        BigDecimal sameBasePrice = new BigDecimal("89.990");
-        when(productRepository.findById(productId)).thenReturn(Optional.of(persistedProduct));
+    @DisplayName("Throw when stock cannot be decreased")
+    void decreaseStockQuantity_insufficientStock_throwsException() {
+        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(persistedProduct()));
+        when(productRepository.decreaseQuantity(PRODUCT_ID, 20)).thenReturn(false);
 
-        // --WHEN--
-        productManagementServiceImpl.updateBasePrice(productId, sameBasePrice);
-
-        // --THEN--
-        assertEquals(0, sameBasePrice.compareTo(persistedProduct.getBasePrice()));
-        verify(productRepository).findById(productId);
-        verify(productRepository, never()).update(any(Product.class));
+        assertThrows(InsufficientStockException.class,
+                () -> service.decreaseStockQuantity(PRODUCT_ID, 20));
     }
 
-    // Update product base price with null arguments, throw NullPointerException ( using ParameterizedTest and Stream )
-    @ParameterizedTest(name = "{index}: null {0}")
-    @MethodSource("nullUpdateBasePriceArguments")
-    @DisplayName("Update a product base price with a null required argument throws NullPointerException")
-    void updateBasePrice_nullRequiredArgument_throwsNullPointerException(
-            String nullArgument, Long productId, BigDecimal newBasePrice, String expectedMessage)
-    {
-        // --GIVEN--
-        // Arguments are supplied by nullUpdateBasePriceArguments().
-
-        // --WHEN--
-        NullPointerException exception = assertThrows(
-                NullPointerException.class,
-                () -> productManagementServiceImpl.updateBasePrice(productId, newBasePrice)
-        );
-
-        // --THEN--
-        assertEquals(expectedMessage, exception.getMessage());
-        verifyNoInteractions(productRepository);
-    }
-
-    static Stream<Arguments> nullUpdateBasePriceArguments()
-    {
-        return Stream.of(
-                Arguments.of("product ID", null, new BigDecimal("99.99"), "ProductId cannot be null"),
-                Arguments.of("new base price", 1L, null, "Product baseprice cannot be null")
-        );
-    }
-
-    // Decrease quantity with valid arguments successfully
     @Test
-    @DisplayName("Decrease the stock quantity of an existing product successfully")
-    void decreaseStockQuantity_validArguments_decreasesQuantitySuccessfully()
-    {
-        // --GIVEN--
-        Product persistedProduct = createPersistedPhysicalProduct();
-        Long productId = persistedProduct.getId();
-        int decreaseQuantity = 3;
-        when(productRepository.findById(productId)).thenReturn(Optional.of(persistedProduct));
-        when(productRepository.decreaseQuantity(productId, decreaseQuantity)).thenReturn(true);
+    @DisplayName("Increase stock for an existing product")
+    void increaseStockQuantity_existingProduct_increasesStock() {
+        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(persistedProduct()));
 
-        // --WHEN--
-        productManagementServiceImpl.decreaseStockQuantity(productId, decreaseQuantity);
+        service.increaseStockQuantity(PRODUCT_ID, 5);
 
-        // --THEN--
-        verify(productRepository).findById(productId);
-        verify(productRepository).decreaseQuantity(productId, decreaseQuantity);
+        verify(productRepository).increaseQuantity(PRODUCT_ID, 5);
     }
-
-    // Decrease quantity with new invalid argument, throw IllegalArgumentException
-    @Test
-    @DisplayName("Decrease stock quantity by a non-positive number throws IllegalArgumentException")
-    void decreaseStockQuantity_nonPositiveQuantity_throwsIllegalArgumentException()
-    {
-        // --GIVEN--
-        Long productId = 1L;
-        int invalidDecreaseQuantity = 0;
-
-        // --WHEN--
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> productManagementServiceImpl.decreaseStockQuantity(
-                        productId, invalidDecreaseQuantity
-                )
-        );
-
-        // --THEN--
-        assertEquals("Product quantity cannot be negative", exception.getMessage());
-        verifyNoInteractions(productRepository);
-    }
-
-    // Decrease quantity but no product found
-    @Test
-    @DisplayName("Decrease the stock quantity of an unknown product throws ProductNotFoundException")
-    void decreaseStockQuantity_unknownProduct_throwsProductNotFoundException()
-    {
-        // --GIVEN--
-        Long productId = 99L;
-        int decreaseQuantity = 3;
-        when(productRepository.findById(productId)).thenReturn(Optional.empty());
-
-        // --WHEN--
-        ProductNotFoundException exception = assertThrows(
-                ProductNotFoundException.class,
-                () -> productManagementServiceImpl.decreaseStockQuantity(productId, decreaseQuantity)
-        );
-
-        // --THEN--
-        assertEquals("Product with id 99 not found", exception.getMessage());
-        verify(productRepository).findById(productId);
-        verify(productRepository, never()).decreaseQuantity(anyLong(), anyInt());
-    }
-
-    // Decrease invalid number (excessive), throw InsufficientStockException
-    @Test
-    @DisplayName("Decrease stock by more than the available quantity throws InsufficientStockException")
-    void decreaseStockQuantity_insufficientStock_throwsInsufficientStockException()
-    {
-        // --GIVEN--
-        Product persistedProduct = createPersistedPhysicalProduct();
-        Long productId = persistedProduct.getId();
-        int excessiveDecreaseQuantity = persistedProduct.getQuantity() + 1;
-        when(productRepository.findById(productId)).thenReturn(Optional.of(persistedProduct));
-        when(productRepository.decreaseQuantity(productId, excessiveDecreaseQuantity)).thenReturn(false);
-
-        // --WHEN--
-        InsufficientStockException exception = assertThrows(
-                InsufficientStockException.class,
-                () -> productManagementServiceImpl.decreaseStockQuantity(
-                        productId, excessiveDecreaseQuantity
-                )
-        );
-
-        // --THEN--
-        assertEquals(
-                "Product [id=1] does not have enough stock: requested 11, available 10",
-                exception.getMessage()
-        );
-        verify(productRepository).findById(productId);
-        verify(productRepository).decreaseQuantity(productId, excessiveDecreaseQuantity);
-    }
-
-    // Activate product successfully
-    @Test
-    @DisplayName("Activate an existing product successfully")
-    void activateProduct_existingProduct_activatesAndUpdatesProduct()
-    {
-        // --GIVEN--
-        Product persistedProduct = createPersistedPhysicalProduct();
-        Long productId = persistedProduct.getId();
-        when(productRepository.findById(productId)).thenReturn(Optional.of(persistedProduct));
-
-        // --WHEN--
-        productManagementServiceImpl.activateProduct(productId);
-
-        // --THEN--
-        assertSame(ProductStatus.ACTIVE, persistedProduct.getStatus());
-        verify(productRepository).findById(productId);
-        verify(productRepository).update(persistedProduct);
-    }
-
-    // Activate a not found product, throw ProductNotFoundException
-    @Test
-    @DisplayName("Activate an unknown product throws ProductNotFoundException")
-    void activateProduct_unknownProduct_throwsProductNotFoundException()
-    {
-        // --GIVEN--
-        Long productId = 99L;
-        when(productRepository.findById(productId)).thenReturn(Optional.empty());
-
-        // --WHEN--
-        ProductNotFoundException exception = assertThrows(
-                ProductNotFoundException.class,
-                () -> productManagementServiceImpl.activateProduct(productId)
-        );
-
-        // --THEN--
-        assertEquals("Product with id 99 not found", exception.getMessage());
-        verify(productRepository).findById(productId);
-        verify(productRepository, never()).update(any(Product.class));
-    }
-
-    // Activate product but null argument provided, throw NullPointerException
-    @Test
-    @DisplayName("Activate a product with a null ID throws NullPointerException")
-    void activateProduct_nullId_throwsNullPointerException()
-    {
-        // --GIVEN--
-        Long productId = null;
-
-        // --WHEN--
-        NullPointerException exception = assertThrows(
-                NullPointerException.class,
-                () -> productManagementServiceImpl.activateProduct(productId)
-        );
-
-        // --THEN--
-        assertEquals("Product id cannot be null", exception.getMessage());
-        verifyNoInteractions(productRepository);
-    }
-
-    // Deactivate product successfully
-    @Test
-    @DisplayName("Deactivate an existing active product successfully")
-    void deactivateProduct_existingActiveProduct_deactivatesAndUpdatesProduct()
-    {
-        // --GIVEN--
-        Product persistedProduct = createPersistedPhysicalProduct();
-        persistedProduct.activate();
-        Long productId = persistedProduct.getId();
-        when(productRepository.findById(productId)).thenReturn(Optional.of(persistedProduct));
-
-        // --WHEN--
-        productManagementServiceImpl.deactivateProduct(productId);
-
-        // --THEN--
-        assertSame(ProductStatus.INACTIVE, persistedProduct.getStatus());
-        verify(productRepository).findById(productId);
-        verify(productRepository).update(persistedProduct);
-    }
-
-    // Deactivate a not found product, throw ProductNotFoundException
-    @Test
-    @DisplayName("Deactivate an unknown product throws ProductNotFoundException")
-    void deactivateProduct_unknownProduct_throwsProductNotFoundException()
-    {
-        // --GIVEN--
-        Long productId = 99L;
-        when(productRepository.findById(productId)).thenReturn(Optional.empty());
-
-        // --WHEN--
-        ProductNotFoundException exception = assertThrows(
-                ProductNotFoundException.class,
-                () -> productManagementServiceImpl.deactivateProduct(productId)
-        );
-
-        // --THEN--
-        assertEquals("Product with id 99 not found", exception.getMessage());
-        verify(productRepository).findById(productId);
-        verify(productRepository, never()).update(any(Product.class));
-    }
-
-    // Deactivate a product but null argument provided, throw NullPointerException
-    @Test
-    @DisplayName("Deactivate a product with a null ID throws NullPointerException")
-    void deactivateProduct_nullId_throwsNullPointerException()
-    {
-        // --GIVEN--
-        Long productId = null;
-
-        // --WHEN--
-        NullPointerException exception = assertThrows(
-                NullPointerException.class,
-                () -> productManagementServiceImpl.deactivateProduct(productId)
-        );
-
-        // --THEN--
-        assertEquals("Product id cannot be null", exception.getMessage());
-        verifyNoInteractions(productRepository);
-    }
-
 }

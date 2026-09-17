@@ -7,23 +7,20 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import product.entities.DigitalProduct;
 import product.entities.Product;
 import product.entities.ProductName;
 import product.entities.ProductStatus;
-import product.entities.ProductType;
 
 import java.math.BigDecimal;
 import java.util.stream.Stream;
 
 public class CheckoutItemTest {
     private static final CartItem CART_ITEM = new CartItem(1L, 2L, 1);
-    private static final Product PRODUCT = new DigitalProduct(
+    private static final Product PRODUCT = new Product(
             new ProductName("Java E-book"),
             10,
             new BigDecimal("25.00"),
-            ProductStatus.ACTIVE,
-            ProductType.DIGITAL
+            ProductStatus.ACTIVE
     );
 
     // Verify that each required checkout item component rejects null with the exact message.

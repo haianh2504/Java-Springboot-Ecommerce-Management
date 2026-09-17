@@ -4,20 +4,15 @@ import exception.resource.detailed_exceptions.OrderNotFoundException;
 import order.entities.Order;
 import order.entities.OrderStatus;
 import order.repository.OrderRepository;
-import shipping.ShippingStrategy;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 public class OrderManagementServiceImpl implements OrderManagementService {
-    private final ShippingStrategy shippingStrategy;
     private final OrderRepository orderRepository;
 //    constructor
-    public OrderManagementServiceImpl(OrderRepository orderRepository, ShippingStrategy shippingStrategy) {
+    public OrderManagementServiceImpl(OrderRepository orderRepository) {
         this.orderRepository = Objects.requireNonNull(orderRepository, "orderRepository must not be null");
-        this.shippingStrategy = Objects.requireNonNull(shippingStrategy, "shippingStrategy must not be null");
     }
 //    create Order
     public Order createOrder(Long userId,

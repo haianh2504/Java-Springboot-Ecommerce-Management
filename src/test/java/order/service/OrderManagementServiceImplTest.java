@@ -14,7 +14,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import order.entities.Order;
 import order.entities.OrderStatus;
 import order.repository.OrderRepository;
-import shipping.ShippingStrategy;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -38,9 +37,6 @@ public class OrderManagementServiceImplTest {
 
     @Mock
     private OrderRepository orderRepository;
-
-    @Mock
-    private ShippingStrategy shippingStrategy;
 
     @InjectMocks
     private OrderManagementServiceImpl orderManagementServiceImpl;
@@ -70,30 +66,11 @@ public class OrderManagementServiceImplTest {
         // --WHEN--
         NullPointerException exception = assertThrows(
                 NullPointerException.class,
-                () -> new OrderManagementServiceImpl(nullOrderRepository, shippingStrategy)
+                () -> new OrderManagementServiceImpl(nullOrderRepository)
         );
 
         // --THEN--
         assertEquals("orderRepository must not be null", exception.getMessage());
-        verifyNoInteractions(shippingStrategy);
-    }
-
-    @Test
-    @DisplayName("Construct the order service with a null shipping strategy throws NullPointerException")
-    void constructor_nullShippingStrategy_throwsNullPointerException()
-    {
-        // --GIVEN--
-        ShippingStrategy nullShippingStrategy = null;
-
-        // --WHEN--
-        NullPointerException exception = assertThrows(
-                NullPointerException.class,
-                () -> new OrderManagementServiceImpl(orderRepository, nullShippingStrategy)
-        );
-
-        // --THEN--
-        assertEquals("shippingStrategy must not be null", exception.getMessage());
-        verifyNoInteractions(orderRepository);
     }
 
     @Test
@@ -126,7 +103,6 @@ public class OrderManagementServiceImplTest {
                         && order.getOrderStatus() == OrderStatus.PENDING_PAYMENT
                         && order.getCreatedAt() != null
         ));
-        verifyNoInteractions(shippingStrategy);
     }
 
     @Test
@@ -154,7 +130,6 @@ public class OrderManagementServiceImplTest {
                         && order.getDiscountAmount().compareTo(BigDecimal.ZERO) == 0
                         && order.getTotalPrice().compareTo(BigDecimal.ZERO) == 0
         ));
-        verifyNoInteractions(shippingStrategy);
     }
 
     @ParameterizedTest(name = "{index}: null {0}")
@@ -176,7 +151,7 @@ public class OrderManagementServiceImplTest {
 
         // --THEN--
         assertEquals(expectedMessage, exception.getMessage());
-        verifyNoInteractions(orderRepository, shippingStrategy);
+        verifyNoInteractions(orderRepository);
     }
 
     static Stream<Arguments> nullCreateOrderLongArguments()
@@ -211,7 +186,7 @@ public class OrderManagementServiceImplTest {
 
         // --THEN--
         assertEquals(expectedMessage, exception.getMessage());
-        verifyNoInteractions(orderRepository, shippingStrategy);
+        verifyNoInteractions(orderRepository);
     }
 
     static Stream<Arguments> nullCreateOrderMonetaryArguments()
@@ -252,7 +227,7 @@ public class OrderManagementServiceImplTest {
 
         // --THEN--
         assertEquals(expectedMessage, exception.getMessage());
-        verifyNoInteractions(orderRepository, shippingStrategy);
+        verifyNoInteractions(orderRepository);
     }
 
     static Stream<Arguments> negativeCreateOrderMonetaryArguments()
@@ -288,7 +263,7 @@ public class OrderManagementServiceImplTest {
 
         // --THEN--
         assertEquals("subTotal must be greater than zero", exception.getMessage());
-        verifyNoInteractions(orderRepository, shippingStrategy);
+        verifyNoInteractions(orderRepository);
     }
 
     @Test
@@ -314,7 +289,6 @@ public class OrderManagementServiceImplTest {
         assertSame(persistedOrders, actualOrders);
         assertEquals(2, actualOrders.size());
         verify(orderRepository).findByUserId(USER_ID);
-        verifyNoInteractions(shippingStrategy);
     }
 
     @Test
@@ -332,7 +306,6 @@ public class OrderManagementServiceImplTest {
         assertSame(noOrders, actualOrders);
         assertTrue(actualOrders.isEmpty());
         verify(orderRepository).findByUserId(USER_ID);
-        verifyNoInteractions(shippingStrategy);
     }
 
     @ParameterizedTest
@@ -351,7 +324,7 @@ public class OrderManagementServiceImplTest {
 
         // --THEN--
         assertEquals("userId must not be null", exception.getMessage());
-        verifyNoInteractions(orderRepository, shippingStrategy);
+        verifyNoInteractions(orderRepository);
     }
 
     @Test
@@ -368,7 +341,6 @@ public class OrderManagementServiceImplTest {
         // --THEN--
         verify(orderRepository).findByOrderId(ORDER_ID);
         verify(orderRepository).deleteByOrderId(ORDER_ID);
-        verifyNoInteractions(shippingStrategy);
     }
 
     @Test
@@ -388,7 +360,6 @@ public class OrderManagementServiceImplTest {
         assertEquals("Order with id 30 not found", exception.getMessage());
         verify(orderRepository).findByOrderId(ORDER_ID);
         verify(orderRepository, never()).deleteByOrderId(anyLong());
-        verifyNoInteractions(shippingStrategy);
     }
 
     @ParameterizedTest
@@ -407,7 +378,7 @@ public class OrderManagementServiceImplTest {
 
         // --THEN--
         assertEquals("orderId must not be null", exception.getMessage());
-        verifyNoInteractions(orderRepository, shippingStrategy);
+        verifyNoInteractions(orderRepository);
     }
 
     @Test
@@ -424,7 +395,6 @@ public class OrderManagementServiceImplTest {
         // --THEN--
         assertSame(persistedOrder, actualOrder);
         verify(orderRepository).findByOrderId(ORDER_ID);
-        verifyNoInteractions(shippingStrategy);
     }
 
     @Test
@@ -443,7 +413,6 @@ public class OrderManagementServiceImplTest {
         // --THEN--
         assertEquals("Order with id 30 not found", exception.getMessage());
         verify(orderRepository).findByOrderId(ORDER_ID);
-        verifyNoInteractions(shippingStrategy);
     }
 
     @ParameterizedTest
@@ -462,6 +431,6 @@ public class OrderManagementServiceImplTest {
 
         // --THEN--
         assertEquals("orderId must not be null", exception.getMessage());
-        verifyNoInteractions(orderRepository, shippingStrategy);
+        verifyNoInteractions(orderRepository);
     }
 }

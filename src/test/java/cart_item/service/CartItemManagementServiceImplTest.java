@@ -16,11 +16,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import product.entities.PhysicalProduct;
 import product.entities.Product;
 import product.entities.ProductName;
 import product.entities.ProductStatus;
-import product.entities.ProductType;
 import product.repository.ProductRepository;
 
 import java.math.BigDecimal;
@@ -49,15 +47,13 @@ public class CartItemManagementServiceImplTest {
 
     private Product createPersistedActiveProduct()
     {
-        return new PhysicalProduct(
+        return new Product(
                 100L,
                 new ProductName("Mechanical Keyboard"),
                 10,
                 new BigDecimal("89.99"),
                 ProductStatus.ACTIVE,
-                ProductType.PHYSICAL,
-                Instant.parse("2026-09-10T00:00:00Z"),
-                new BigDecimal("1.25")
+                Instant.parse("2026-09-10T00:00:00Z")
         );
     }
 
@@ -510,15 +506,13 @@ public class CartItemManagementServiceImplTest {
         CartItem firstCartItem = createPersistedCartItem();
         CartItem secondCartItem = new CartItem(2L, 10L, 101L, 3);
         Product firstProduct = createPersistedActiveProduct();
-        Product secondProduct = new PhysicalProduct(
+        Product secondProduct = new Product(
                 101L,
                 new ProductName("Wireless Mouse"),
                 20,
                 new BigDecimal("20.00"),
                 ProductStatus.ACTIVE,
-                ProductType.PHYSICAL,
-                Instant.parse("2026-09-10T01:00:00Z"),
-                new BigDecimal("0.20")
+                Instant.parse("2026-09-10T01:00:00Z")
         );
         List<CartItem> cartItems = List.of(firstCartItem, secondCartItem);
         when(productRepository.findById(firstProduct.getId())).thenReturn(Optional.of(firstProduct));

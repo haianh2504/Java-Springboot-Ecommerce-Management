@@ -28,7 +28,6 @@ import product.repository.ProductRepository;
 import product.service.ProductManagementService;
 import product.service.ProductManagementServiceImpl;
 import shipping.ShippingStrategy;
-import shipping.WeightBasedStrategy;
 import transaction_management.TransactionManagement;
 import user.entities.*;
 import user.repository.JdbcUserRepository;

@@ -17,8 +17,9 @@ public class ProductManagementServiceImpl implements ProductManagementService{
     {
         this.productRepository = productRepository;
     }
-//    create new physical produc - need authorize - ( default status: UNACTIVE ) -> ACTIVATE after
-    public Product createNewPhysicalProduct(ProductName name, int stockQuantity, BigDecimal basePrice, BigDecimal weight){
+//    create new product - need authorize - (default status: INACTIVE) -> activate after
+    @Override
+    public Product createProduct(ProductName name, int stockQuantity, BigDecimal basePrice){
         Objects.requireNonNull(name,"Product name cannot be null");
         if(stockQuantity < 0){
             throw new IllegalArgumentException("Invalid stock quantity");
@@ -27,50 +28,15 @@ public class ProductManagementServiceImpl implements ProductManagementService{
         if(basePrice.compareTo(BigDecimal.ZERO) <= 0){
             throw new IllegalArgumentException("Product base price has to be bigger than Zero");
         }
-        Objects.requireNonNull(weight, "Product weight cannot be null");
-        if(weight.compareTo(BigDecimal.ZERO) <= 0)
-        {
-            throw new IllegalArgumentException("Product weight has to be bigger than Zero");
-        }
         // check if the product is already existing or not
         Optional<Product> product = productRepository.findByName(name);
         if(product.isPresent())
         {
             throw new ProductNameAlreadyInUseException();
         }
-        // new product feature
-        ProductType type = ProductType.PHYSICAL;
-        ProductStatus status = ProductStatus.INACTIVE;
-        // create new
-        // save in db
-        Product newProduct = productRepository.save(
-                new PhysicalProduct(name,stockQuantity,basePrice,status,type,weight)
+        return productRepository.save(
+                new Product(name, stockQuantity, basePrice, ProductStatus.INACTIVE)
         );
-        return newProduct;
-    }
-
-//    create new digital product - need authorize
-    @Override
-    public Product createNewDigitalProduct(ProductName name, int stockQuantity, BigDecimal basePrice) {
-        Objects.requireNonNull(name, "Product name cannot be null");
-        if(stockQuantity < 0)
-        {
-            throw new IllegalArgumentException("Product quantity cannot be negative");
-        }
-        Objects.requireNonNull(basePrice, "Product base price cannot be null");
-        if(basePrice.compareTo(BigDecimal.ZERO) <= 0)
-        {
-            throw new IllegalArgumentException("Product base price has to be bigger than Zero");
-        }
-        // check if already exist
-        Optional<Product> product = productRepository.findByName(name);
-        if(product.isPresent()){
-            throw new ProductNameAlreadyInUseException();
-        }
-        Product newProduct = productRepository.save(
-                new DigitalProduct(name,stockQuantity,basePrice,ProductStatus.INACTIVE,ProductType.DIGITAL)
-        );
-        return newProduct;
     }
 //    find product by id
     @Override
@@ -102,26 +68,6 @@ public class ProductManagementServiceImpl implements ProductManagementService{
                         () -> new ProductNotFoundException(productId)
                 );
         product.changeProductName(newName);
-        productRepository.update(product);
-    }
-//    update product weight - need auth
-    @Override
-    public void updateProductWeight(Long productId, BigDecimal newWeight) {
-        Objects.requireNonNull(productId, "ProductId cannot be null");
-        Objects.requireNonNull(newWeight, "Product new weight cannot be null");
-        Product product = productRepository.findById(productId)
-                .orElseThrow(
-                        () -> new ProductNotFoundException(productId)
-                );
-        if(product instanceof DigitalProduct)
-        {
-            throw new IllegalStateException("Digital Product do not have weight");
-        }
-        if(product instanceof PhysicalProduct physicalProduct)
-        {
-            if(physicalProduct.getWeight().compareTo(newWeight) == 0) return;
-            physicalProduct.setWeight(newWeight);
-        }
         productRepository.update(product);
     }
 //    update base price

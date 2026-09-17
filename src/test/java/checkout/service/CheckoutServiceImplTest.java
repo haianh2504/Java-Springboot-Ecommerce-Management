@@ -24,12 +24,9 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import product.entities.DigitalProduct;
-import product.entities.PhysicalProduct;
 import product.entities.Product;
 import product.entities.ProductName;
 import product.entities.ProductStatus;
-import product.entities.ProductType;
 import product.service.ProductManagementService;
 import shipping.ShippingStrategy;
 import transaction_management.TransactionManagement;
@@ -81,11 +78,11 @@ class CheckoutServiceImplTest {
         // --GIVEN--
         executeTransactionWorkImmediately();
         Cart cart = createActiveCart(USER_ID);
-        CartItem physicalCartItem = new CartItem(1L, CART_ID, 101L, 2);
-        CartItem digitalCartItem = new CartItem(2L, CART_ID, 102L, 1);
-        List<CartItem> cartItems = List.of(physicalCartItem, digitalCartItem);
-        Product physicalProduct = createPhysicalProduct(101L, "Keyboard", "100.00", "1.50", 10);
-        Product digitalProduct = createDigitalProduct(102L, "E-book", "50.00", 20);
+        CartItem firstCartItem = new CartItem(1L, CART_ID, 101L, 2);
+        CartItem secondCartItem = new CartItem(2L, CART_ID, 102L, 1);
+        List<CartItem> cartItems = List.of(firstCartItem, secondCartItem);
+        Product firstProduct = createProduct(101L, "Keyboard", "100.00", 10);
+        Product secondProduct = createProduct(102L, "E-book", "50.00", 20);
         BigDecimal expectedSubTotal = new BigDecimal("250.00");
         BigDecimal expectedTotal = new BigDecimal("260.00");
         Order persistedOrder = createPersistedOrder(
@@ -94,10 +91,10 @@ class CheckoutServiceImplTest {
 
         when(cartManagementService.getCartById(CART_ID)).thenReturn(cart);
         when(cartItemManagementService.getCartItemsByCartId(CART_ID)).thenReturn(cartItems);
-        when(cartItemManagementService.validatedCartItemToOrderItem(physicalCartItem))
-                .thenReturn(physicalProduct);
-        when(cartItemManagementService.validatedCartItemToOrderItem(digitalCartItem))
-                .thenReturn(digitalProduct);
+        when(cartItemManagementService.validatedCartItemToOrderItem(firstCartItem))
+                .thenReturn(firstProduct);
+        when(cartItemManagementService.validatedCartItemToOrderItem(secondCartItem))
+                .thenReturn(secondProduct);
         when(shippingStrategy.calculateShippingFee(any())).thenReturn(SHIPPING_FEE);
         when(discountService.calculateDiscountAmount(expectedSubTotal)).thenReturn(DISCOUNT_AMOUNT);
         when(orderManagementService.createOrder(
@@ -112,10 +109,10 @@ class CheckoutServiceImplTest {
         verify(transactionManagement).execute(any());
         verify(shippingStrategy).calculateShippingFee(argThat(items ->
                 items.size() == 2
-                        && items.get(0).cartItem() == physicalCartItem
-                        && items.get(0).product() == physicalProduct
-                        && items.get(1).cartItem() == digitalCartItem
-                        && items.get(1).product() == digitalProduct
+                        && items.get(0).cartItem() == firstCartItem
+                        && items.get(0).product() == firstProduct
+                        && items.get(1).cartItem() == secondCartItem
+                        && items.get(1).product() == secondProduct
         ));
         verify(discountService).calculateDiscountAmount(expectedSubTotal);
         verify(orderManagementService).createOrder(
@@ -284,7 +281,7 @@ class CheckoutServiceImplTest {
         // --GIVEN--
         executeTransactionWorkImmediately();
         CartItem cartItem = new CartItem(1L, CART_ID, 101L, 1);
-        Product product = createDigitalProduct(101L, "E-book", "100.00", 5);
+        Product product = createProduct(101L, "E-book", "100.00", 5);
         when(cartManagementService.getCartById(CART_ID)).thenReturn(createActiveCart(USER_ID));
         when(cartItemManagementService.getCartItemsByCartId(CART_ID)).thenReturn(List.of(cartItem));
         when(cartItemManagementService.validatedCartItemToOrderItem(cartItem)).thenReturn(product);
@@ -338,7 +335,7 @@ class CheckoutServiceImplTest {
                 new TransactionManagement(connection)
         );
         CartItem cartItem = new CartItem(1L, CART_ID, 101L, 2);
-        Product product = createDigitalProduct(101L, "E-book", "50.00", 2);
+        Product product = createProduct(101L, "E-book", "50.00", 2);
         BigDecimal subTotal = new BigDecimal("100.00");
         Order persistedOrder = createPersistedOrder(
                 subTotal, BigDecimal.ZERO, BigDecimal.ZERO, subTotal
@@ -410,30 +407,14 @@ class CheckoutServiceImplTest {
         );
     }
 
-    private Product createPhysicalProduct(
-            Long id, String name, String price, String weight, int stockQuantity)
+    private Product createProduct(Long id, String name, String price, int stockQuantity)
     {
-        return new PhysicalProduct(
+        return new Product(
                 id,
                 new ProductName(name),
                 stockQuantity,
                 new BigDecimal(price),
                 ProductStatus.ACTIVE,
-                ProductType.PHYSICAL,
-                Instant.parse("2026-09-10T00:00:00Z"),
-                new BigDecimal(weight)
-        );
-    }
-
-    private Product createDigitalProduct(Long id, String name, String price, int stockQuantity)
-    {
-        return new DigitalProduct(
-                id,
-                new ProductName(name),
-                stockQuantity,
-                new BigDecimal(price),
-                ProductStatus.ACTIVE,
-                ProductType.DIGITAL,
                 Instant.parse("2026-09-10T00:00:00Z")
         );
     }

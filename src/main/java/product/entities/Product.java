@@ -4,15 +4,14 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Objects;
 
-public abstract class Product {
+public class Product {
     private Long id;
     private ProductName name;
     private int stockQuantity;
     private BigDecimal basePrice;
     private ProductStatus status;
-    private final ProductType productType;
     private Instant createdAt;
-    protected Product(ProductName name, int stockQuantity, BigDecimal basePrice, ProductStatus status, ProductType productType)
+    public Product(ProductName name, int stockQuantity, BigDecimal basePrice, ProductStatus status)
     {
         this.name = Objects.requireNonNull(name, "Product name cannot be null");
         if(stockQuantity < 0){
@@ -24,11 +23,10 @@ public abstract class Product {
             throw new IllegalArgumentException("Product base price cannot be negative");
         }
         this.status = Objects.requireNonNull(status,"Product status cannot be null");
-        this.productType = Objects.requireNonNull(productType,"Product type cannot be null");
         this.createdAt = Instant.now();
     }
 //    constructor to return product from database
-    protected Product(Long id, ProductName name, int stockQuantity, BigDecimal basePrice, ProductStatus status, ProductType productType, Instant createdAt)
+    public Product(Long id, ProductName name, int stockQuantity, BigDecimal basePrice, ProductStatus status, Instant createdAt)
     {
         this.id = Objects.requireNonNull(id,"productId cannot be null");
         this.name = Objects.requireNonNull(name, "Product name cannot be null");
@@ -41,7 +39,6 @@ public abstract class Product {
             throw new IllegalArgumentException("Product base price cannot be negative");
         }
         this.status = Objects.requireNonNull(status,"Product status cannot be null");
-        this.productType = Objects.requireNonNull(productType,"Product type cannot be null");
         this.createdAt = Objects.requireNonNull(createdAt,"Timestampt createdAt cannot be null");
     }
 //    getters
@@ -52,7 +49,6 @@ public abstract class Product {
         return basePrice;
     }
     public final ProductStatus getStatus(){return this.status;}
-    public final ProductType getProductType(){return this.productType;}
     public final Instant getCreatedAt(){return this.createdAt;}
 
     //    setters
