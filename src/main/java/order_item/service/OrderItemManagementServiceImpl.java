@@ -59,7 +59,7 @@ public class OrderItemManagementServiceImpl implements OrderItemManagementServic
     }
 //    get OrderItem by orderId and ProductId
     @Override
-    public OrderItem getOrderItemById(Long orderId, Long productId) {
+    public OrderItem getOrderItem(Long orderId, Long productId) {
         Objects.requireNonNull(orderId, "orderId must not be null");
         Objects.requireNonNull(productId, "productId must not be null");
         requireExistingOrder(orderId);

@@ -337,7 +337,7 @@ class OrderItemManagementServiceImplTest {
                 .thenReturn(Optional.of(persistedOrderItem));
 
         // --WHEN--
-        OrderItem actualOrderItem = orderItemManagementServiceImpl.getOrderItemById(
+        OrderItem actualOrderItem = orderItemManagementServiceImpl.getOrderItem(
                 ORDER_ID, PRODUCT_ID
         );
 
@@ -357,7 +357,7 @@ class OrderItemManagementServiceImplTest {
         // --WHEN--
         OrderNotFoundException exception = assertThrows(
                 OrderNotFoundException.class,
-                () -> orderItemManagementServiceImpl.getOrderItemById(ORDER_ID, PRODUCT_ID)
+                () -> orderItemManagementServiceImpl.getOrderItem(ORDER_ID, PRODUCT_ID)
         );
 
         // --THEN--
@@ -378,7 +378,7 @@ class OrderItemManagementServiceImplTest {
         // --WHEN--
         OrderItemNotFoundException exception = assertThrows(
                 OrderItemNotFoundException.class,
-                () -> orderItemManagementServiceImpl.getOrderItemById(ORDER_ID, PRODUCT_ID)
+                () -> orderItemManagementServiceImpl.getOrderItem(ORDER_ID, PRODUCT_ID)
         );
 
         // --THEN--
@@ -393,7 +393,7 @@ class OrderItemManagementServiceImplTest {
     @ParameterizedTest(name = "null {0}")
     @MethodSource("nullOrderAndProductIds")
     @DisplayName("Getting an order item with a null required ID throws NullPointerException")
-    void getOrderItemById_nullRequiredId_throwsNullPointerException(
+    void getOrderItem_throwsNullPointerException(
             String nullArgument, Long orderId, Long productId, String expectedMessage)
     {
         // --GIVEN--
@@ -402,7 +402,7 @@ class OrderItemManagementServiceImplTest {
         // --WHEN--
         NullPointerException exception = assertThrows(
                 NullPointerException.class,
-                () -> orderItemManagementServiceImpl.getOrderItemById(orderId, productId)
+                () -> orderItemManagementServiceImpl.getOrderItem(orderId, productId)
         );
 
         // --THEN--
