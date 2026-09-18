@@ -27,6 +27,11 @@ public class CreateUserRequest {
     private String email;
 
     @NotBlank(message = "Password cannot be blank")
+    @Pattern(
+            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z\\d\\s])\\S{8,72}$",
+            message = "Password must be 8-72 characters long and contain at least one lowercase "
+                    + "letter, one uppercase letter, one digit, one special character, and no whitespace"
+    )
     private String password;
 
     @NotBlank(message = "Phone number cannot be blank")

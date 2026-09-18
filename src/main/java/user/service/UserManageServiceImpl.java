@@ -13,10 +13,12 @@ import java.util.Objects;
 public final class UserManageServiceImpl implements UserManagementService{
     // Lấy UserRepository làm biến tham chiếu quyết định các phương thức
     private final UserRepository userRepository;
+    private final PasswordHasher passwordHasher;
 //    constructor
-    public UserManageServiceImpl(UserRepository userRepository)
+    public UserManageServiceImpl(UserRepository userRepository, PasswordHasher passwordHasher)
     {
-        this.userRepository = userRepository;
+        this.userRepository = Objects.requireNonNull(userRepository, "User repository cannot be null");
+        this.passwordHasher = Objects.requireNonNull(passwordHasher, "Password hasher cannot be null");
     }
 //    find user by ID
     @Override
@@ -36,9 +38,9 @@ public final class UserManageServiceImpl implements UserManagementService{
     }
     //    create new user after REGISTER
     @Override
-    public User createUser(PasswordHash passwordHash, PersonName name, PhoneNumber phoneNumber, Email email, UserRole userRole){
+    public User createUser(RawPassword rawPassword, PersonName name, PhoneNumber phoneNumber, Email email, UserRole userRole){
         // check null
-        Objects.requireNonNull(passwordHash, "Password hash cannot be null");
+        Objects.requireNonNull(rawPassword, "Raw password cannot be null");
         Objects.requireNonNull(name, "Name cannot be null");
         Objects.requireNonNull(email, "Email cannot be null");
         Objects.requireNonNull(userRole, "User role cannot be null");
@@ -47,9 +49,9 @@ public final class UserManageServiceImpl implements UserManagementService{
         {
             throw new EmailAlreadyInUseException();
         }
+        PasswordHash passwordHash = passwordHasher.hash(rawPassword);
         // phoneNumber is optional
-        User user = userRepository.save(new User(passwordHash,name,phoneNumber,email,userRole));
-        return user;
+        return userRepository.save(new User(passwordHash,name,phoneNumber,email,userRole));
     }
 //    activate User
     @Override

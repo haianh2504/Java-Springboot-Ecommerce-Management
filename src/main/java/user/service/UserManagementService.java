@@ -8,7 +8,7 @@ public interface UserManagementService {
 //    find user by email
     public User findUserByEmail(Email email);
 //    create new User
-    public User createUser(PasswordHash passwordHash, PersonName name, PhoneNumber phoneNumber, Email email, UserRole userRole);
+    public User createUser(RawPassword rawPassword, PersonName name, PhoneNumber phoneNumber, Email email, UserRole userRole);
 //    make status ACTIVE if have full info
     public User activateUser(Long userId,PhoneNumber phoneNumber);
 //    make status BANNED
