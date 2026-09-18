@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class changeUserNameRequest {
+public class ChangeUserNameRequest {
     @NotBlank(message="New username cannot be blank")
     @Pattern(
             regexp = "^[\\p{L}]+(?:[ '\\-][\\p{L}]+)*$",
