@@ -34,7 +34,7 @@ class CreateUserDtoTest {
         CreateUserRequest dto = new CreateUserRequest(
                 "Nguyen Hai Anh",
                 "haianh@example.com",
-                "secret",
+                "StrongPassword1!",
                 "0912345678",
                 UserRole.NORMAL_USER
         );

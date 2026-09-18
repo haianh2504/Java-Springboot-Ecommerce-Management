@@ -30,6 +30,8 @@ public class UserManagementServiceImplTest {
     // giả lập repository và service thuộc tính
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private PasswordHasher passwordHasher;
     // Ịnject mocks ở trên <- tự động inject mocks vào nhờ Extension
     @InjectMocks
     private UserManageServiceImpl userManagementServiceImpl;
@@ -74,13 +76,14 @@ public class UserManagementServiceImplTest {
                 Instant.parse("2026-09-10T00:00:00Z")
         );
     }
-    // create new user with valid PasswordHash, PersonName, PhoneNumber, Email and UserRole -> ACTIVE
+    // create new user with valid RawPassword, PersonName, PhoneNumber, Email and UserRole -> ACTIVE
     @Test
     @DisplayName("create new user with valid information then user is saved and returned ACTIVE user")
     void createUser_validInformation_savedActiveUser()
     {
         // -- GIVEN --
         // set up
+        RawPassword rawPassword = new RawPassword("StrongPassword1!");
         PasswordHash passwordHash = new PasswordHash("$2342haHkacnd");
         PersonName personName = new PersonName("Phan Hai Anh");
         Email email = new Email("haianh2504077@gmail.com");
@@ -89,12 +92,13 @@ public class UserManagementServiceImplTest {
         User savedUser = createPersistedActiveUser();
         // stubbing 1: email chưa tồn tại trong DB -> Optional.empty(
         when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+        when(passwordHasher.hash(rawPassword)).thenReturn(passwordHash);
         // stubbing 2: khi save user thì sẽ return new User có id
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
         // -- WHEN --
         User actualUser = userManagementServiceImpl.createUser(
-                passwordHash,
+                rawPassword,
                 personName,
                 phoneNumber,
                 email,
@@ -115,6 +119,7 @@ public class UserManagementServiceImplTest {
         );
         // verify: findByEmail() chi chay 1 lan
         verify(userRepository, times(1)).findByEmail(email);
+        verify(passwordHasher, times(1)).hash(rawPassword);
         // verify: save() chi chay 1 lan
         verify(userRepository, times(1)).save(argThat(createdUser ->
                 createdUser.getId() == null
@@ -133,6 +138,7 @@ public class UserManagementServiceImplTest {
     void createUser_nullPhoneNumber_pendingStatus()
     {
         // -- GIVEN --
+        RawPassword rawPassword = new RawPassword("StrongPassword1!");
         PasswordHash passwordHash = new PasswordHash("$2342haHkacnd");
         PersonName personName = new PersonName("Phan Hai Anh");
         Email email = new Email("haianh2504077@gmail.com");
@@ -141,11 +147,12 @@ public class UserManagementServiceImplTest {
         User savedUser = createPersistedPendingUser();
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+        when(passwordHasher.hash(rawPassword)).thenReturn(passwordHash);
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
         // -- WHEN --
         User actualUser = userManagementServiceImpl.createUser(
-                passwordHash,
+                rawPassword,
                 personName,
                 null,
                 email,
@@ -154,6 +161,7 @@ public class UserManagementServiceImplTest {
 
         // -- THEN --
         verify(userRepository, times(1)).findByEmail(email);
+        verify(passwordHasher, times(1)).hash(rawPassword);
         verify(userRepository, times(1)).save(argThat(createdUser ->
                 createdUser.getId() == null
                         && createdUser.getPasswordHash().equals(passwordHash)
@@ -182,7 +190,7 @@ public class UserManagementServiceImplTest {
     void createUser_emailAlreadyInUse_throwException()
     {
         // -- GIVEN --
-        PasswordHash passwordHash = new PasswordHash("$2342haHkacnd");
+        RawPassword rawPassword = new RawPassword("StrongPassword1!");
         PersonName personName = new PersonName("Phan Hai Anh");
         Email email = new Email("haianh2504077@gmail.com"); // already in use
         PhoneNumber phoneNumber = new PhoneNumber("0912345678");
@@ -195,7 +203,7 @@ public class UserManagementServiceImplTest {
         EmailAlreadyInUseException exception = assertThrows(
                 EmailAlreadyInUseException.class,
                 () -> userManagementServiceImpl.createUser(
-                        passwordHash,
+                        rawPassword,
                         personName,
                         phoneNumber,
                         email,
@@ -205,6 +213,7 @@ public class UserManagementServiceImplTest {
         // -- THEN --
         assertEquals("This email has already been used", exception.getMessage());
         verify(userRepository, times(1)).findByEmail(email);
+        verifyNoInteractions(passwordHasher);
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -214,7 +223,7 @@ public class UserManagementServiceImplTest {
     @DisplayName("Create user with a null required argument throws NullPointerException")
     void createUser_nullRequiredArguments_throwNullPointerException(
             String nullArgument,
-            PasswordHash passwordHash,
+            RawPassword rawPassword,
             PersonName personName,
             PhoneNumber phoneNumber,
             Email email,
@@ -229,7 +238,7 @@ public class UserManagementServiceImplTest {
         NullPointerException exception = assertThrows(
                 NullPointerException.class,
                 () -> userManagementServiceImpl.createUser(
-                        passwordHash,
+                        rawPassword,
                         personName,
                         phoneNumber,
                         email,
@@ -244,20 +253,20 @@ public class UserManagementServiceImplTest {
 
     static Stream<Arguments> nullRequiredArguments()
     {
-        PasswordHash passwordHash = new PasswordHash("$2342haHkacnd");
+        RawPassword rawPassword = new RawPassword("StrongPassword1!");
         PersonName personName = new PersonName("Phan Hai Anh");
         PhoneNumber phoneNumber = new PhoneNumber("0912345678");
         Email email = new Email("haianh2504077@gmail.com");
         UserRole role = UserRole.NORMAL_USER;
 
         return Stream.of(
-                Arguments.of("password hash", null, personName, phoneNumber, email, role,
-                        "Password hash cannot be null"),
-                Arguments.of("name", passwordHash, null, phoneNumber, email, role,
+                Arguments.of("raw password", null, personName, phoneNumber, email, role,
+                        "Raw password cannot be null"),
+                Arguments.of("name", rawPassword, null, phoneNumber, email, role,
                         "Name cannot be null"),
-                Arguments.of("email", passwordHash, personName, phoneNumber, null, role,
+                Arguments.of("email", rawPassword, personName, phoneNumber, null, role,
                         "Email cannot be null"),
-                Arguments.of("role", passwordHash, personName, phoneNumber, email, null,
+                Arguments.of("role", rawPassword, personName, phoneNumber, email, null,
                         "User role cannot be null")
         );
     }
