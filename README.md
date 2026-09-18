@@ -435,18 +435,19 @@ I am using this project to learn why transactions are important and how JDBC tra
 
 ## Technologies
 
-| Technology              | Purpose                              |
-| ----------------------- | ------------------------------------ |
-| Java 21                 | Main programming language            |
-| JDBC                    | Database communication               |
-| PostgreSQL              | Relational database                  |
-| Maven                   | Project and dependency management    |
-| Lombok                  | Reducing repetitive Java boilerplate |
-| JUnit Jupiter & Mockito | Unit testing services                |
-| IntelliJ IDEA           | Development environment              |
-| Git & GitHub            | Version control and learning history |
+| Technology              | Purpose                                           |
+| ----------------------- | ------------------------------------------------- |
+| Java 21                 | Main programming language                         |
+| JDBC                    | Direct database communication                     |
+| PostgreSQL              | Relational database                               |
+| Maven                   | Project build and dependency management           |
+| Lombok                  | Reducing repetitive Java boilerplate              |
+| Jakarta Bean Validation | Declarative validation for DTO input data         |
+| jBCrypt                 | Secure password hashing and password verification |
+| JUnit Jupiter & Mockito | Unit testing and mocking service dependencies     |
+| IntelliJ IDEA           | Development environment                           |
+| Git & GitHub            | Version control and learning history              |
 
----
 
 ## Maven
 
