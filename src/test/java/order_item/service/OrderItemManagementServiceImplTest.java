@@ -100,6 +100,8 @@ class OrderItemManagementServiceImplTest {
         stubExistingOrder();
         when(orderItemRepository.findByOrderIdAndProductId(ORDER_ID, PRODUCT_ID))
                 .thenReturn(Optional.empty());
+        OrderItem persistedOrderItem = createPersistedOrderItem();
+        when(orderItemRepository.save(any(OrderItem.class))).thenReturn(persistedOrderItem);
 
         // --WHEN--
         OrderItem actualOrderItem = orderItemManagementServiceImpl.createNewOrderItem(
@@ -112,7 +114,7 @@ class OrderItemManagementServiceImplTest {
         verify(orderItemRepository).save(orderItemCaptor.capture());
         OrderItem capturedOrderItem = orderItemCaptor.getValue();
         assertAll(
-                () -> assertSame(capturedOrderItem, actualOrderItem),
+                () -> assertSame(persistedOrderItem, actualOrderItem),
                 () -> assertNull(capturedOrderItem.getOrderItemId()),
                 () -> assertEquals(ORDER_ID, capturedOrderItem.getOrderId()),
                 () -> assertEquals(PRODUCT_ID, capturedOrderItem.getProductId()),
@@ -507,7 +509,7 @@ class OrderItemManagementServiceImplTest {
                 .thenReturn(Optional.of(persistedOrderItem));
 
         // --WHEN--
-        BigDecimal actualTotal = orderItemManagementServiceImpl.getTotalPrice(persistedOrderItem);
+        BigDecimal actualTotal = orderItemManagementServiceImpl.getTotalPrice(ORDER_ID, PRODUCT_ID);
 
         // --THEN--
         assertEquals(0, actualTotal.compareTo(new BigDecimal("31.00")));
@@ -520,13 +522,12 @@ class OrderItemManagementServiceImplTest {
     void getTotalPrice_unknownOrder_throwsOrderNotFoundException()
     {
         // --GIVEN--
-        OrderItem orderItem = createPersistedOrderItem();
         when(orderRepository.findByOrderId(ORDER_ID)).thenReturn(Optional.empty());
 
         // --WHEN--
         OrderNotFoundException exception = assertThrows(
                 OrderNotFoundException.class,
-                () -> orderItemManagementServiceImpl.getTotalPrice(orderItem)
+                () -> orderItemManagementServiceImpl.getTotalPrice(ORDER_ID, PRODUCT_ID)
         );
 
         // --THEN--
@@ -540,7 +541,6 @@ class OrderItemManagementServiceImplTest {
     void getTotalPrice_unknownOrderItem_throwsOrderItemNotFoundException()
     {
         // --GIVEN--
-        OrderItem orderItem = createPersistedOrderItem();
         stubExistingOrder();
         when(orderItemRepository.findByOrderIdAndProductId(ORDER_ID, PRODUCT_ID))
                 .thenReturn(Optional.empty());
@@ -548,7 +548,7 @@ class OrderItemManagementServiceImplTest {
         // --WHEN--
         OrderItemNotFoundException exception = assertThrows(
                 OrderItemNotFoundException.class,
-                () -> orderItemManagementServiceImpl.getTotalPrice(orderItem)
+                () -> orderItemManagementServiceImpl.getTotalPrice(ORDER_ID, PRODUCT_ID)
         );
 
         // --THEN--
@@ -561,20 +561,22 @@ class OrderItemManagementServiceImplTest {
     }
 
     @Test
-    @DisplayName("Calculating total price with a null order item throws NullPointerException")
-    void getTotalPrice_nullOrderItem_throwsNullPointerException()
+    @DisplayName("Calculating total price with a null ID throws NullPointerException")
+    void getTotalPrice_nullId_throwsNullPointerException()
     {
-        // --GIVEN--
-        OrderItem orderItem = null;
-
-        // --WHEN--
-        NullPointerException exception = assertThrows(
+        NullPointerException nullOrderIdException = assertThrows(
                 NullPointerException.class,
-                () -> orderItemManagementServiceImpl.getTotalPrice(orderItem)
+                () -> orderItemManagementServiceImpl.getTotalPrice(null, PRODUCT_ID)
+        );
+        NullPointerException nullProductIdException = assertThrows(
+                NullPointerException.class,
+                () -> orderItemManagementServiceImpl.getTotalPrice(ORDER_ID, null)
         );
 
-        // --THEN--
-        assertEquals("orderItem must not be null", exception.getMessage());
+        assertAll(
+                () -> assertEquals("orderId must not be null", nullOrderIdException.getMessage()),
+                () -> assertEquals("productId must not be null", nullProductIdException.getMessage())
+        );
         verifyNoInteractions(orderRepository, orderItemRepository);
     }
 }

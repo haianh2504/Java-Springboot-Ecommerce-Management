@@ -38,13 +38,12 @@ public class OrderItemManagementServiceImpl implements OrderItemManagementServic
         }
         requireExistingOrder(orderId);
 
-        Optional<OrderItem> orderItem = orderItemRepository.findByOrderIdAndProductId(orderId,productId);
-        if(orderItem.isPresent()){
+        Optional<OrderItem> existingOrderItem = orderItemRepository.findByOrderIdAndProductId(orderId,productId);
+        if(existingOrderItem.isPresent()){
             throw new OrderItemAlreadyExistsException(orderId,productId);
         }
-        OrderItem orderItem1 = new OrderItem(orderId, productId, quantity, unit_price);
-        orderItemRepository.save(orderItem1);
-        return orderItem1;
+        OrderItem orderItem = new OrderItem(orderId, productId, quantity, unit_price);
+        return orderItemRepository.save(orderItem);
     }
 //    delete Order Item
     @Override
@@ -53,7 +52,7 @@ public class OrderItemManagementServiceImpl implements OrderItemManagementServic
         Objects.requireNonNull(productId, "productId must not be null");
         requireExistingOrder(orderId);
         // check for existence
-        OrderItem orderItem = orderItemRepository.findByOrderIdAndProductId(orderId,productId)
+        orderItemRepository.findByOrderIdAndProductId(orderId,productId)
                 .orElseThrow(() -> OrderItemNotFoundException.byOrderIdAndProductId(orderId, productId));
         orderItemRepository.delete(orderId,productId);
     }
@@ -78,12 +77,12 @@ public class OrderItemManagementServiceImpl implements OrderItemManagementServic
     }
 //    calculate total price of an order items
     @Override
-    public BigDecimal getTotalPrice(OrderItem orderItem) {
-        Objects.requireNonNull(orderItem, "orderItem must not be null");
-        requireExistingOrder(orderItem.getOrderId());
-        if(orderItemRepository.findByOrderIdAndProductId(orderItem.getOrderId(), orderItem.getProductId()).isEmpty()){
-            throw OrderItemNotFoundException.byOrderIdAndProductId(orderItem.getOrderId(),orderItem.getProductId());
-        }
+    public BigDecimal getTotalPrice(Long orderId, Long productId) {
+        Objects.requireNonNull(orderId, "orderId must not be null");
+        Objects.requireNonNull(productId, "productId must not be null");
+        requireExistingOrder(orderId);
+        OrderItem orderItem = orderItemRepository.findByOrderIdAndProductId(orderId, productId)
+                .orElseThrow(() -> OrderItemNotFoundException.byOrderIdAndProductId(orderId, productId));
         return orderItem.getUnitPrice().multiply(
                 new BigDecimal(orderItem.getQuantity())
         );

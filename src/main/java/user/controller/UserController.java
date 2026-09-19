@@ -10,8 +10,6 @@ import user.dto.response.UserResponse;
 import user.entities.*;
 import user.service.UserManagementService;
 
-import java.util.Objects;
-
 @RestController
 @RequestMapping("/api/v1/users")
 // v1 is for starting, building root
@@ -106,6 +104,29 @@ public class UserController {
                 id,
                 new Email(request.getNewEmail())
         );
+        return ResponseEntity.ok(UserResponse.from(user));
+    }
+
+    // CHANGE user name
+    @PatchMapping("/{id}/name")
+    public ResponseEntity<UserResponse> changeUserName(
+            @PathVariable("id") @Positive Long id,
+            @Valid @RequestBody ChangeUserNameRequest request
+    ) {
+        User user = userManagementService.changeUserName(
+                id,
+                new PersonName(request.getNewUserName())
+        );
+        return ResponseEntity.ok(UserResponse.from(user));
+    }
+
+    // PROMOTE user to admin
+    @PatchMapping("/{id}/role/admin")
+    public ResponseEntity<UserResponse> promoteToAdmin(
+            @PathVariable("id") @Positive Long id,
+            @Valid @RequestBody PromoteToAdminRequest request
+    ) {
+        User user = userManagementService.promoteToAdmin(request.adminId(), id);
         return ResponseEntity.ok(UserResponse.from(user));
     }
 

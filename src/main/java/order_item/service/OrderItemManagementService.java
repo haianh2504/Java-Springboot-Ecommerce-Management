@@ -19,5 +19,5 @@ public interface OrderItemManagementService {
     public List<OrderItem> getOrderItemsByOrderId(Long orderId);
 
 //    calculate total price of an order items
-    public BigDecimal getTotalPrice(OrderItem orderItem);
+    public BigDecimal getTotalPrice(Long orderId, Long productId);
 }

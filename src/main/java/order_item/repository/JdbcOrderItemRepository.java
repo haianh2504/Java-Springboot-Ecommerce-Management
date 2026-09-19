@@ -18,7 +18,7 @@ public class JdbcOrderItemRepository implements OrderItemRepository {
     }
 //    save order item
     @Override
-    public void save(OrderItem orderItem) {
+    public OrderItem save(OrderItem orderItem) {
         String sql = """
                 INSERT INTO order_items(
                 order_id,
@@ -26,7 +26,8 @@ public class JdbcOrderItemRepository implements OrderItemRepository {
                 quantity,
                 unit_price 
                 )
-                VALUES ( ?, ?, ?, ? );
+                VALUES ( ?, ?, ?, ? )
+                RETURNING id;
                 """;
         try(PreparedStatement ps = connection.prepareStatement(sql))
         {
@@ -34,7 +35,18 @@ public class JdbcOrderItemRepository implements OrderItemRepository {
             ps.setLong(2, orderItem.getProductId());
             ps.setInt(3, orderItem.getQuantity());
             ps.setBigDecimal(4, orderItem.getUnitPrice());
-            ps.executeUpdate();
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    throw new SQLException("Saving and returning order item failed");
+                }
+                return new OrderItem(
+                        rs.getLong("id"),
+                        orderItem.getOrderId(),
+                        orderItem.getProductId(),
+                        orderItem.getQuantity(),
+                        orderItem.getUnitPrice()
+                );
+            }
         }catch (SQLException e)
         {
             throw new RuntimeException("Error while saving order item: " + e.getMessage(), e);

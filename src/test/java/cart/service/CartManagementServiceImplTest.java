@@ -4,6 +4,7 @@ import cart.entities.Cart;
 import cart.entities.CartStatus;
 import cart.repository.CartRepository;
 import cart_item.repository.CartItemRepository;
+import exception.business.detailed_exceptions.AccountBannedException;
 import exception.business.detailed_exceptions.CartAlreadyCheckedOutException;
 import exception.resource.detailed_exceptions.CartNotFoundException;
 import exception.resource.detailed_exceptions.UserNotFoundException;
@@ -13,6 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import user.entities.*;
+import user.repository.UserRepository;
 
 import java.time.Instant;
 import java.util.List;
@@ -28,6 +31,8 @@ public class CartManagementServiceImplTest {
     private CartRepository cartRepository;
     @Mock
     private CartItemRepository cartItemRepository;
+    @Mock
+    private UserRepository userRepository;
     @InjectMocks
     private CartManagementServiceImpl cartManagementServiceImpl;
 
@@ -51,6 +56,20 @@ public class CartManagementServiceImplTest {
         );
     }
 
+    private User createPersistedUser(Long userId, UserStatus status)
+    {
+        return new User(
+                userId,
+                new PasswordHash("$2342haHkacnd"),
+                new PersonName("Cart Owner"),
+                status == UserStatus.PENDING ? null : new PhoneNumber("0912345678"),
+                new Email("cart.owner@example.com"),
+                UserRole.NORMAL_USER,
+                status,
+                Instant.parse("2026-09-10T00:00:00Z")
+        );
+    }
+
     // Create new cart for a persisted user, save and return saved cart
     @Test
     @DisplayName("Create a cart for an existing user, then save and return the persisted cart")
@@ -59,6 +78,8 @@ public class CartManagementServiceImplTest {
         // --GIVEN--
         Long userId = 10L;
         Cart savedCart = createPersistedActiveCart();
+        when(userRepository.findById(userId))
+                .thenReturn(Optional.of(createPersistedUser(userId, UserStatus.ACTIVE)));
         when(cartRepository.save(any(Cart.class))).thenReturn(savedCart);
 
         // --WHEN--
@@ -77,6 +98,25 @@ public class CartManagementServiceImplTest {
                         && cart.getCreatedAt() != null
                         && cart.getCartStatus() == CartStatus.ACTIVE
         ));
+        verify(userRepository).findById(userId);
+        verifyNoInteractions(cartItemRepository);
+    }
+
+    @Test
+    @DisplayName("Create a cart for a pending user")
+    void createCart_pendingUser_savesCart()
+    {
+        Long userId = 10L;
+        Cart savedCart = createPersistedActiveCart();
+        when(userRepository.findById(userId))
+                .thenReturn(Optional.of(createPersistedUser(userId, UserStatus.PENDING)));
+        when(cartRepository.save(any(Cart.class))).thenReturn(savedCart);
+
+        Cart actualCart = cartManagementServiceImpl.createCart(userId);
+
+        assertSame(savedCart, actualCart);
+        verify(userRepository).findById(userId);
+        verify(cartRepository).save(any(Cart.class));
         verifyNoInteractions(cartItemRepository);
     }
 
@@ -87,8 +127,7 @@ public class CartManagementServiceImplTest {
     {
         // --GIVEN--
         Long userId = 99L;
-        UserNotFoundException repositoryException = new UserNotFoundException(userId);
-        when(cartRepository.save(any(Cart.class))).thenThrow(repositoryException);
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         // --WHEN--
         UserNotFoundException actualException = assertThrows(
@@ -98,11 +137,29 @@ public class CartManagementServiceImplTest {
 
         // --THEN--
         assertAll(
-                () -> assertSame(repositoryException, actualException),
                 () -> assertEquals("User with id 99 not found", actualException.getMessage())
         );
-        verify(cartRepository).save(any(Cart.class));
+        verify(userRepository).findById(userId);
+        verifyNoInteractions(cartRepository);
         verifyNoInteractions(cartItemRepository);
+    }
+
+    @Test
+    @DisplayName("Create a cart for a banned user throws AccountBannedException")
+    void createCart_bannedUser_throwsAccountBannedException()
+    {
+        Long userId = 10L;
+        when(userRepository.findById(userId))
+                .thenReturn(Optional.of(createPersistedUser(userId, UserStatus.BANNED)));
+
+        AccountBannedException exception = assertThrows(
+                AccountBannedException.class,
+                () -> cartManagementServiceImpl.createCart(userId)
+        );
+
+        assertEquals("This account has already been banned.", exception.getMessage());
+        verify(userRepository).findById(userId);
+        verifyNoInteractions(cartRepository, cartItemRepository);
     }
 
     // Create new cart but null userId -> throw exception
@@ -121,7 +178,7 @@ public class CartManagementServiceImplTest {
 
         // --THEN--
         assertEquals("userId cannot be null", exception.getMessage());
-        verifyNoInteractions(cartRepository, cartItemRepository);
+        verifyNoInteractions(cartRepository, cartItemRepository, userRepository);
     }
 
     // Get carts successfully by a persisted user's Id

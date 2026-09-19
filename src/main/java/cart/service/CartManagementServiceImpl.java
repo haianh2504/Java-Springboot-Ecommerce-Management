@@ -3,8 +3,13 @@ package cart.service;
 import cart.entities.Cart;
 import cart.repository.CartRepository;
 import cart_item.repository.CartItemRepository;
+import exception.business.detailed_exceptions.AccountBannedException;
 import exception.business.detailed_exceptions.CartAlreadyCheckedOutException;
 import exception.resource.detailed_exceptions.CartNotFoundException;
+import exception.resource.detailed_exceptions.UserNotFoundException;
+import user.entities.User;
+import user.entities.UserStatus;
+import user.repository.UserRepository;
 
 import java.util.List;
 import java.util.Objects;
@@ -12,17 +17,27 @@ import java.util.Objects;
 public class CartManagementServiceImpl implements CartManagementService {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
+    private final UserRepository userRepository;
 //    constructor
-    public CartManagementServiceImpl(CartRepository cartRepository, CartItemRepository cartItemRepository) {
+    public CartManagementServiceImpl(
+            CartRepository cartRepository,
+            CartItemRepository cartItemRepository,
+            UserRepository userRepository
+    ) {
         this.cartRepository = Objects.requireNonNull(cartRepository, "CartRepository cannot be null");
         this.cartItemRepository = Objects.requireNonNull(cartItemRepository, "CartItemRepository cannot be null");
+        this.userRepository = Objects.requireNonNull(userRepository, "UserRepository cannot be null");
     }
 //    create new cart
     @Override
     public Cart createCart(Long userId) {
         Objects.requireNonNull(userId, "userId cannot be null");
-        Cart cart = cartRepository.save(new Cart(userId));
-        return cart;
+        User persistedUser = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        if (persistedUser.getStatus() == UserStatus.BANNED) {
+            throw new AccountBannedException();
+        }
+        return cartRepository.save(new Cart(userId));
     }
 //    get carts by userID
     @Override
