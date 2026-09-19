@@ -401,10 +401,14 @@ public class CartItemManagementServiceImplTest {
                 .thenReturn(Optional.of(product));
 
         // --WHEN--
-        cartItemManagementServiceImpl.updateCartItemQuantity(cartItemId, newQuantity);
+        CartItem updated = cartItemManagementServiceImpl.updateCartItemQuantity(
+                cartItemId,
+                newQuantity
+        );
 
         // --THEN--
         assertEquals(newQuantity, persistedCartItem.getNumber());
+        assertSame(persistedCartItem, updated);
         verify(cartItemRepository).findByCartItemId(cartItemId);
         verify(productRepository).findById(persistedCartItem.getProductId());
         verify(cartItemRepository).update(persistedCartItem);
@@ -488,10 +492,14 @@ public class CartItemManagementServiceImplTest {
         when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
 
         // --WHEN--
-        cartItemManagementServiceImpl.updateCartItemQuantity(cartItemId, sameQuantity);
+        CartItem unchanged = cartItemManagementServiceImpl.updateCartItemQuantity(
+                cartItemId,
+                sameQuantity
+        );
 
         // --THEN--
         assertEquals(sameQuantity, persistedCartItem.getNumber());
+        assertSame(persistedCartItem, unchanged);
         verify(cartItemRepository).findByCartItemId(cartItemId);
         verify(productRepository).findById(product.getId());
         verify(cartItemRepository, never()).update(any(CartItem.class));

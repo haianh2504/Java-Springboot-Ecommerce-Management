@@ -75,7 +75,7 @@ public class CartItemManagementServiceImpl implements  CartItemManagementService
     }
 //    update Item quantity
     @Override
-    public void updateCartItemQuantity(Long cartItemId, int newQuantity) {
+    public CartItem updateCartItemQuantity(Long cartItemId, int newQuantity) {
         Objects.requireNonNull(cartItemId, "cartItemId cannot be null");
         if(newQuantity<=0){
             throw new IllegalArgumentException("newQuantity must be greater than 0");
@@ -86,12 +86,13 @@ public class CartItemManagementServiceImpl implements  CartItemManagementService
         Product product = productRepository.findById(cartItem.getProductId()).orElseThrow(
                 () -> new ProductNotFoundException(cartItem.getProductId())
         );
-        if(newQuantity == cartItem.getNumber()) return;
+        if(newQuantity == cartItem.getNumber()) return cartItem;
         else if(newQuantity > product.getQuantity()){
             throw new InsufficientStockException(product.getId(), newQuantity,product.getQuantity());
         }
         cartItem.changeNumber(newQuantity);
         cartItemRepository.update(cartItem);
+        return cartItem;
     }
 //    calculate total price for each cart item
     @Override
@@ -131,4 +132,3 @@ public class CartItemManagementServiceImpl implements  CartItemManagementService
         return product;
     }
 }
-

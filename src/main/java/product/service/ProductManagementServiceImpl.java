@@ -38,6 +38,15 @@ public class ProductManagementServiceImpl implements ProductManagementService{
                 new Product(name, stockQuantity, basePrice, ProductStatus.INACTIVE)
         );
     }
+//    delete product by id
+    @Override
+    public void deleteProduct(Long productId) {
+        Objects.requireNonNull(productId, "Product id cannot be null");
+        if (productRepository.findById(productId).isEmpty()) {
+            throw new ProductNotFoundException(productId);
+        }
+        productRepository.deleteById(productId);
+    }
 //    find product by id
     @Override
     public Product findProductById(Long productId) {
@@ -59,7 +68,7 @@ public class ProductManagementServiceImpl implements ProductManagementService{
     }
 //    update product name - need auth
     @Override
-    public void updateProductName(Long productId, ProductName newName) {
+    public Product updateProductName(Long productId, ProductName newName) {
         Objects.requireNonNull(productId, "ProductId cannot be null");
         Objects.requireNonNull(newName, "Product name cannot be null");
         // check for existence
@@ -69,23 +78,25 @@ public class ProductManagementServiceImpl implements ProductManagementService{
                 );
         product.changeProductName(newName);
         productRepository.update(product);
+        return product;
     }
 //    update base price
     @Override
-    public void updateBasePrice(Long productId, BigDecimal newBasePrice) {
+    public Product updateBasePrice(Long productId, BigDecimal newBasePrice) {
         Objects.requireNonNull(productId,"ProductId cannot be null");
         Objects.requireNonNull(newBasePrice,"Product baseprice cannot be null");
         Product product = productRepository.findById(productId)
                 .orElseThrow(
                         () -> new ProductNotFoundException(productId)
                 );
-        if(product.getBasePrice().compareTo(newBasePrice) == 0) return;
+        if(product.getBasePrice().compareTo(newBasePrice) == 0) return product;
         product.setBasePrice(newBasePrice);
         productRepository.update(product);
+        return product;
     }
 //    activate product - need auth
     @Override
-    public void activateProduct(Long productId) {
+    public Product activateProduct(Long productId) {
         Objects.requireNonNull(productId,"Product id cannot be null");
         Product product = productRepository.findById(productId)
                 .orElseThrow(
@@ -93,10 +104,11 @@ public class ProductManagementServiceImpl implements ProductManagementService{
                 );
         product.activate();
         productRepository.update(product);
+        return product;
     }
 //    deactivate product - need auth
     @Override
-    public void deactivateProduct(Long productId)
+    public Product deactivateProduct(Long productId)
     {
         Objects.requireNonNull(productId,"Product id cannot be null");
         Product product = productRepository.findById(productId)
@@ -105,39 +117,36 @@ public class ProductManagementServiceImpl implements ProductManagementService{
                 );
         product.deactivate();
         productRepository.update(product);
+        return product;
     }
 //    decrease quantity
     @Override
-    public void decreaseStockQuantity(Long productId, int decreaseQuantity) {
+    public Product decreaseStockQuantity(Long productId, int decreaseQuantity) {
         Objects.requireNonNull(productId,"Product id cannot be null");
         if(decreaseQuantity < 0)
         {
             throw new IllegalArgumentException("Product quantity cannot be negative");
         }
-        else if(decreaseQuantity == 0) return;
+        else if(decreaseQuantity == 0) return findProductById(productId);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
-        if(!productRepository.decreaseQuantity(productId, decreaseQuantity))
-        {
-            throw new InsufficientStockException(
-                    productId,
-                    decreaseQuantity,
-                    product.getQuantity()
-            );
-        }
+        return productRepository.decreaseQuantity(productId, decreaseQuantity)
+                .orElseThrow(() -> new InsufficientStockException(
+                        productId,
+                        decreaseQuantity,
+                        product.getQuantity()
+                ));
     }
 //    increase quantity
     @Override
-    public void increaseStockQuantity(Long productId, int increaseQuantity) {
+    public Product increaseStockQuantity(Long productId, int increaseQuantity) {
         Objects.requireNonNull(productId,"Product id cannot be null");
         if(increaseQuantity < 0)
         {
             throw new IllegalArgumentException("Product quantity cannot be negative");
         }
-        else if(increaseQuantity == 0) return;
-        if(productRepository.findById(productId).isEmpty()){
-            throw new ProductNotFoundException(productId);
-        }
-        productRepository.increaseQuantity(productId, increaseQuantity);
+        else if(increaseQuantity == 0) return findProductById(productId);
+        return productRepository.increaseQuantity(productId, increaseQuantity)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
     }
 }

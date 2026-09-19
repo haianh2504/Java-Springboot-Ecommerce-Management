@@ -20,7 +20,7 @@ public interface CartItemManagementService {
     public CartItem getCartItemByCartIdAndProductId(Long cartId,Long productId);
 
 //    update Cart Item quantity
-    public void updateCartItemQuantity(Long cartItemId, int newQuantity);
+    public CartItem updateCartItemQuantity(Long cartItemId, int newQuantity);
 
 //    calculate total price for a cartItem
     public BigDecimal calculateTotalPrice(List<CartItem> cartItemList);

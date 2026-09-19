@@ -142,6 +142,17 @@ public final class JdbcProductRepository implements ProductRepository {
             throw new RuntimeException("Error while searching for product: " + e.getMessage(),e);
         }
     }
+//    delete product by id
+    @Override
+    public void deleteById(Long productId) {
+        String sql = "DELETE FROM products WHERE id = ?;";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error while deleting product: " + e.getMessage(), e);
+        }
+    }
 //    update product after changes
     @Override
     public void update(Product product)
@@ -170,24 +181,26 @@ public final class JdbcProductRepository implements ProductRepository {
     }
 //    decrease quantity
     @Override
-    public boolean decreaseQuantity(Long productId, int quantity) {
+    public Optional<Product> decreaseQuantity(Long productId, int quantity) {
         String sql = """
                 UPDATE products
                 SET quantity = quantity - ?
                 WHERE id = ?
                   AND status = 'ACTIVE'
-                  AND quantity >= ?;
+                  AND quantity >= ?
+                RETURNING id, name, quantity, price, status, created_at;
                 """;
         try(PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setInt(1, quantity);
             ps.setLong(2, productId);
             ps.setInt(3, quantity);
-            int affectedRows = ps.executeUpdate();
             // The stock check and subtraction happen in one statement. PostgreSQL
             // re-checks the predicate after waiting for a concurrent row lock, which
             // prevents two buyers from both spending the same remaining inventory.
-            return affectedRows == 1;
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? Optional.of(mapProduct(rs)) : Optional.empty();
+            }
         }catch (SQLException e)
         {
             throw new RuntimeException("Error while decreasing product's quantity: " + e.getMessage(),e);
@@ -195,20 +208,34 @@ public final class JdbcProductRepository implements ProductRepository {
     }
 //    increase quantity
     @Override
-    public void increaseQuantity(Long productId, int quantity) {
+    public Optional<Product> increaseQuantity(Long productId, int quantity) {
         String sql = """
                 UPDATE products
                 SET quantity = quantity + ?
-                WHERE id = ?;
+                WHERE id = ?
+                RETURNING id, name, quantity, price, status, created_at;
         """;
         try(PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setInt(1, quantity);
             ps.setLong(2, productId);
-            ps.executeUpdate();
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? Optional.of(mapProduct(rs)) : Optional.empty();
+            }
         }catch (SQLException e)
         {
             throw new RuntimeException("Error while increasing product's quantity: " + e.getMessage(),e);
         }
+    }
+
+    private Product mapProduct(ResultSet rs) throws SQLException {
+        return new Product(
+                rs.getLong("id"),
+                new ProductName(rs.getString("name")),
+                rs.getInt("quantity"),
+                rs.getBigDecimal("price"),
+                ProductStatus.valueOf(rs.getString("status")),
+                rs.getTimestamp("created_at").toInstant()
+        );
     }
 }

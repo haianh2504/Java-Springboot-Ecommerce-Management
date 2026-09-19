@@ -90,6 +90,44 @@ class ProductManagementServiceImplTest {
     }
 
     @Test
+    @DisplayName("Delete an existing product")
+    void deleteProduct_existingProduct_deletesProduct() {
+        when(productRepository.findById(PRODUCT_ID))
+                .thenReturn(Optional.of(persistedProduct()));
+
+        service.deleteProduct(PRODUCT_ID);
+
+        verify(productRepository).findById(PRODUCT_ID);
+        verify(productRepository).deleteById(PRODUCT_ID);
+    }
+
+    @Test
+    @DisplayName("Reject a null product ID when deleting")
+    void deleteProduct_nullId_throwsNullPointerException() {
+        NullPointerException exception = assertThrows(
+                NullPointerException.class,
+                () -> service.deleteProduct(null)
+        );
+
+        assertEquals("Product id cannot be null", exception.getMessage());
+        verifyNoInteractions(productRepository);
+    }
+
+    @Test
+    @DisplayName("Throw when deleting a product that does not exist")
+    void deleteProduct_unknownProduct_throwsProductNotFoundException() {
+        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.empty());
+
+        assertThrows(
+                ProductNotFoundException.class,
+                () -> service.deleteProduct(PRODUCT_ID)
+        );
+
+        verify(productRepository).findById(PRODUCT_ID);
+        verify(productRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
     @DisplayName("Find products by id and name")
     void findProduct_existingProduct_returnsProduct() {
         Product product = persistedProduct();
@@ -117,9 +155,10 @@ class ProductManagementServiceImplTest {
         ProductName newName = new ProductName("Wireless Keyboard");
         when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
 
-        service.updateProductName(PRODUCT_ID, newName);
+        Product updated = service.updateProductName(PRODUCT_ID, newName);
 
         assertEquals(newName, product.getName());
+        assertSame(product, updated);
         verify(productRepository).update(product);
     }
 
@@ -130,9 +169,10 @@ class ProductManagementServiceImplTest {
         BigDecimal newPrice = new BigDecimal("99.99");
         when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
 
-        service.updateBasePrice(PRODUCT_ID, newPrice);
+        Product updated = service.updateBasePrice(PRODUCT_ID, newPrice);
 
         assertEquals(newPrice, product.getBasePrice());
+        assertSame(product, updated);
         verify(productRepository).update(product);
     }
 
@@ -141,8 +181,9 @@ class ProductManagementServiceImplTest {
     void updateBasePrice_samePrice_doesNotUpdate() {
         when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(persistedProduct()));
 
-        service.updateBasePrice(PRODUCT_ID, PRICE);
+        Product unchanged = service.updateBasePrice(PRODUCT_ID, PRICE);
 
+        assertEquals(PRICE, unchanged.getBasePrice());
         verify(productRepository, never()).update(any());
     }
 
@@ -152,11 +193,13 @@ class ProductManagementServiceImplTest {
         Product product = persistedProduct();
         when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
 
-        service.deactivateProduct(PRODUCT_ID);
+        Product deactivated = service.deactivateProduct(PRODUCT_ID);
         assertEquals(ProductStatus.INACTIVE, product.getStatus());
-        service.activateProduct(PRODUCT_ID);
+        assertSame(product, deactivated);
+        Product activated = service.activateProduct(PRODUCT_ID);
 
         assertEquals(ProductStatus.ACTIVE, product.getStatus());
+        assertSame(product, activated);
         verify(productRepository, times(2)).update(product);
     }
 
@@ -164,10 +207,16 @@ class ProductManagementServiceImplTest {
     @DisplayName("Decrease available stock atomically")
     void decreaseStockQuantity_availableStock_decreasesStock() {
         when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(persistedProduct()));
-        when(productRepository.decreaseQuantity(PRODUCT_ID, 2)).thenReturn(true);
+        Product updated = new Product(
+                PRODUCT_ID, NAME, 8, PRICE, ProductStatus.ACTIVE,
+                Instant.parse("2026-09-10T00:00:00Z")
+        );
+        when(productRepository.decreaseQuantity(PRODUCT_ID, 2))
+                .thenReturn(Optional.of(updated));
 
-        service.decreaseStockQuantity(PRODUCT_ID, 2);
+        Product actual = service.decreaseStockQuantity(PRODUCT_ID, 2);
 
+        assertSame(updated, actual);
         verify(productRepository).decreaseQuantity(PRODUCT_ID, 2);
     }
 
@@ -175,7 +224,8 @@ class ProductManagementServiceImplTest {
     @DisplayName("Throw when stock cannot be decreased")
     void decreaseStockQuantity_insufficientStock_throwsException() {
         when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(persistedProduct()));
-        when(productRepository.decreaseQuantity(PRODUCT_ID, 20)).thenReturn(false);
+        when(productRepository.decreaseQuantity(PRODUCT_ID, 20))
+                .thenReturn(Optional.empty());
 
         assertThrows(InsufficientStockException.class,
                 () -> service.decreaseStockQuantity(PRODUCT_ID, 20));
@@ -184,10 +234,16 @@ class ProductManagementServiceImplTest {
     @Test
     @DisplayName("Increase stock for an existing product")
     void increaseStockQuantity_existingProduct_increasesStock() {
-        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(persistedProduct()));
+        Product updated = new Product(
+                PRODUCT_ID, NAME, 15, PRICE, ProductStatus.ACTIVE,
+                Instant.parse("2026-09-10T00:00:00Z")
+        );
+        when(productRepository.increaseQuantity(PRODUCT_ID, 5))
+                .thenReturn(Optional.of(updated));
 
-        service.increaseStockQuantity(PRODUCT_ID, 5);
+        Product actual = service.increaseStockQuantity(PRODUCT_ID, 5);
 
+        assertSame(updated, actual);
         verify(productRepository).increaseQuantity(PRODUCT_ID, 5);
     }
 }
