@@ -1,48 +1,37 @@
 package checkout.controller;
 
-import cart.service.CartManagementService;
-import cart_item.service.CartItemManagementService;
-import discount.service.DiscountService;
-import order.service.OrderManagementService;
-import order_item.service.OrderItemManagementService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import product.service.ProductManagementService;
-import shipping.ShippingStrategy;
-import transaction_management.TransactionManagement;
+import checkout.dto.CheckoutRequest;
+import checkout.service.CheckoutService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import order.dto.response.OrderResponse;
+import order.entities.Order;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/checkouts")
+@RequestMapping("/api/v1/carts")
 public class CheckoutController {
-    private final CartManagementService cartManagementService;
-    private final CartItemManagementService cartItemManagementService;
-    private final ShippingStrategy shippingStrategy;
-    private final DiscountService discountService;
-    private final OrderManagementService orderManagementService;
-    private final OrderItemManagementService orderItemManagementService;
-    private final ProductManagementService productManagementService;
-    private final TransactionManagement transactionManagement;
+    private final CheckoutService checkoutService;
 
-    @Autowired
     public CheckoutController(
-            CartManagementService cartManagementService,
-            CartItemManagementService cartItemManagementService,
-            ShippingStrategy shippingStrategy,
-            DiscountService discountService,
-            OrderManagementService orderManagementService,
-            OrderItemManagementService orderItemManagementService,
-            ProductManagementService productManagementService,
-            TransactionManagement transactionManagement
+            CheckoutService checkoutService
     ) {
-        this.cartManagementService = cartManagementService;
-        this.cartItemManagementService = cartItemManagementService;
-        this.shippingStrategy = shippingStrategy;
-        this.discountService = discountService;
-        this.orderManagementService = orderManagementService;
-        this.orderItemManagementService = orderItemManagementService;
-        this.productManagementService = productManagementService;
-        this.transactionManagement = transactionManagement;
+        this.checkoutService = checkoutService;
+    }
+
+    // CHECKOUT by cartId and userId
+    @PostMapping("/{cartId}/checkout")
+    public ResponseEntity<OrderResponse> checkoutCart(
+            @PathVariable @Positive Long cartId,
+            @RequestBody @Valid CheckoutRequest request
+    )
+    {
+        Order checkedOutOrder = checkoutService.checkout(request.userId(), cartId);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(OrderResponse.from(checkedOutOrder));
     }
 
 

@@ -63,12 +63,4 @@ public class CartController {
         return ResponseEntity.noContent().build();
     }
 
-    // CHECKOUT ( PATCH ) cart -> 204 NO CONTENT
-    @PatchMapping("/{cartId}/checkout")
-    public ResponseEntity<Void> checkoutCart(
-            @PathVariable @Positive Long cartId
-    ) {
-        cartManagementService.checkoutCart(cartId);
-        return ResponseEntity.noContent().build();
-    }
 }

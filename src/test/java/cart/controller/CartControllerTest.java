@@ -18,7 +18,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -131,14 +130,4 @@ class CartControllerTest {
         verify(cartManagementService).clearCart(cartId);
     }
 
-    @Test
-    void checkoutCart_validCartId_returnsNoContent() throws Exception {
-        Long cartId = 1L;
-
-        mockMvc.perform(patch("/api/v1/carts/{cartId}/checkout", cartId))
-                .andExpect(status().isNoContent())
-                .andExpect(content().string(""));
-
-        verify(cartManagementService).checkoutCart(cartId);
-    }
 }
