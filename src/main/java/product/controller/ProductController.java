@@ -1,6 +1,7 @@
 package product.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public final class ProductController {
         this.productManagementService = productManagementService;
     }
     // CREATE product
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<ProductResponse> createProduct(
             @RequestBody @Valid CreateProductRequest request
     ) {
@@ -35,21 +36,21 @@ public final class ProductController {
     }
 
     // GET product by Id
-    @GetMapping("/by-id")
-    public ResponseEntity<ProductResponse> getProductById(@RequestParam @Positive Long productId)
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductResponse> getProductById(@PathVariable @Positive Long productId)
     {
         Product savedProduct = productManagementService.findProductById(productId);
         return ResponseEntity.ok(ProductResponse.from(savedProduct));
     }
 
     // GET product by name
-    @GetMapping("/by-name")
+    @GetMapping(params = "name")
     public ResponseEntity<ProductResponse> getProductByName(
-            @Valid @RequestBody GetProductByNameRequest request
+            @RequestParam @NotNull String name
             )
     {
         Product persistedProduct = productManagementService.findProductByName(
-                new ProductName(request.getName())
+                new ProductName(name)
         );
         return ResponseEntity.ok(ProductResponse.from(persistedProduct));
     }
@@ -82,7 +83,7 @@ public final class ProductController {
     }
 
     // DELETE by id
-    @DeleteMapping("/{id}/delete")
+    @DeleteMapping("/{id}")
     public ResponseEntity<ProductResponse> deleteProductById(
             @PathVariable @Positive Long id
     )
