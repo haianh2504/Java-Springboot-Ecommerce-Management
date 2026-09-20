@@ -40,7 +40,7 @@ class UserControllerExceptionHandlingTest {
         when(userManagementService.findUserById(999L))
                 .thenThrow(new UserNotFoundException(999L));
 
-        mockMvc.perform(get("/api/v1/users/999/by-id"))
+        mockMvc.perform(get("/api/v1/users/999"))
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.httpStatusCode").value(404))

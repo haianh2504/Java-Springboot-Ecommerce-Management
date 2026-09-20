@@ -43,7 +43,7 @@ public class UserController {
     }
 
     // GET user by Email
-    @GetMapping("/by-email")
+    @GetMapping(params = "email")
     public ResponseEntity<UserResponse> getUserByEmail(
             @RequestParam(name = "email",required=true) @jakarta.validation.constraints.Email String email
     ){
@@ -54,7 +54,7 @@ public class UserController {
     }
 
     // GET user by id
-    @GetMapping("/{id}/by-id")
+    @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUserById(
             @PathVariable("id") @Positive Long id
     )

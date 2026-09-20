@@ -37,7 +37,7 @@ public final class ProductController {
 
     // GET product by Id
     @GetMapping("/{id}")
-    public ResponseEntity<ProductResponse> getProductById(@PathVariable @Positive Long productId)
+    public ResponseEntity<ProductResponse> getProductById(@PathVariable("id") @Positive Long productId)
     {
         Product savedProduct = productManagementService.findProductById(productId);
         return ResponseEntity.ok(ProductResponse.from(savedProduct));
@@ -58,7 +58,7 @@ public final class ProductController {
     // UPDATE product name
     @PatchMapping("/{id}/name")
     public ResponseEntity<ProductResponse> updateProductNameById(
-            @PathVariable @Valid @Positive Long id,
+            @PathVariable @Positive Long id,
             @RequestBody @Valid UpdateProductNameRequest request
     )
     {
@@ -84,7 +84,7 @@ public final class ProductController {
 
     // DELETE by id
     @DeleteMapping("/{id}")
-    public ResponseEntity<ProductResponse> deleteProductById(
+    public ResponseEntity<Void> deleteProductById(
             @PathVariable @Positive Long id
     )
     {

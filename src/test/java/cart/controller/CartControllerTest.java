@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
@@ -18,6 +19,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -25,6 +27,9 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standal
 
 @ExtendWith(MockitoExtension.class)
 class CartControllerTest {
+    private static final Long CART_ID = 1L;
+    private static final Long USER_ID = 10L;
+
     @Mock
     private CartManagementService cartManagementService;
 
@@ -33,6 +38,44 @@ class CartControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = standaloneSetup(new CartController(cartManagementService)).build();
+    }
+
+    private Cart persistedCart() {
+        return new Cart(
+                CART_ID,
+                USER_ID,
+                Instant.parse("2026-09-10T00:00:00Z"),
+                CartStatus.ACTIVE
+        );
+    }
+
+    @Test
+    void createCart_validRequest_returnsCreatedCart() throws Exception {
+        when(cartManagementService.createCart(USER_ID)).thenReturn(persistedCart());
+
+        mockMvc.perform(post("/api/v1/carts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"userId": 10}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.cartId").value(1))
+                .andExpect(jsonPath("$.userId").value(10))
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
+
+        verify(cartManagementService).createCart(USER_ID);
+    }
+
+    @Test
+    void getCartById_existingCart_returnsCart() throws Exception {
+        when(cartManagementService.getCartById(CART_ID)).thenReturn(persistedCart());
+
+        mockMvc.perform(get("/api/v1/carts/{id}", CART_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cartId").value(1))
+                .andExpect(jsonPath("$.userId").value(10));
+
+        verify(cartManagementService).getCartById(CART_ID);
     }
 
     @Test

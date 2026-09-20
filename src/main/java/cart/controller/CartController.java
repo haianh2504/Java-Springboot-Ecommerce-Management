@@ -1,8 +1,10 @@
 package cart.controller;
 
+import cart.dto.request.CreateCartRequest;
 import cart.dto.response.CartResponse;
 import cart.entities.Cart;
 import cart.service.CartManagementService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,19 +22,19 @@ public class CartController {
     }
 
     // CREATE cart -> 201 CREATED
-    @PostMapping("/users/{userId}/carts")
+    @PostMapping
     public ResponseEntity<CartResponse> createCart(
-            @PathVariable @Positive Long userId
+            @RequestBody @Valid CreateCartRequest request
     ) {
-        Cart createdCart = cartManagementService.createCart(userId);
+        Cart createdCart = cartManagementService.createCart(request.userId());
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(CartResponse.from(createdCart));
     }
     // GET cart by id -> 200 OK
-    @GetMapping(params = "id")
+    @GetMapping("/{id}")
     public ResponseEntity<CartResponse> getCartById(
-            @RequestParam @Positive Long id
+            @PathVariable @Positive Long id
     )
     {
         Cart cart = cartManagementService.getCartById(id);

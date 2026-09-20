@@ -18,14 +18,13 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/cart-items")
 public class CartItemController {
     private final CartItemManagementService cartItemManagementService;
     public CartItemController(CartItemManagementService cartItemManagementService) {
         this.cartItemManagementService = cartItemManagementService;
     }
     // ADD new cart -> 201 CREATED
-    @PostMapping("/carts/{cartId}/items")
+    @PostMapping("/api/v1/carts/{cartId}/items")
     public ResponseEntity<CartItemResponse> createCartItem(
             @PathVariable @Positive Long cartId,
             @RequestBody @Valid CreateCartItemRequest request
@@ -41,8 +40,8 @@ public class CartItemController {
     }
 
     // DELETE cart -> 204 NO CONTENT
-    @DeleteMapping("/{cartItemId}")
-    public ResponseEntity<CartItemResponse> deleteCartItem(
+    @DeleteMapping("/api/v1/cart-items/{cartItemId}")
+    public ResponseEntity<Void> deleteCartItem(
             @PathVariable @Positive Long cartItemId
     )
     {
@@ -51,7 +50,7 @@ public class CartItemController {
     }
 
     // GET list cartItems by cartId -> 200 OK
-    @GetMapping("/carts/{cartId}")
+    @GetMapping("/api/v1/carts/{cartId}/items")
     public ResponseEntity<List<CartItemResponse>> getListCartItemsByCartId(
             @PathVariable @Positive Long cartId
     )
@@ -63,7 +62,7 @@ public class CartItemController {
         return ResponseEntity.ok(cartItemResponses);
     }
     // GET by cartId and productId -> 200 OK
-    @GetMapping("/carts/{cartId}/products/{productId}")
+    @GetMapping("/api/v1/carts/{cartId}/items/{productId}")
     public ResponseEntity<CartItemResponse> getCartItemsByCartIdAndProductId(
             @PathVariable @Positive Long cartId,
             @PathVariable @Positive Long productId
@@ -74,7 +73,7 @@ public class CartItemController {
     }
 
     // UPDATE (PATCH) quantity by id -> 200 OK
-    @PatchMapping("/{id}")
+    @PatchMapping("/api/v1/cart-items/{id}")
     public ResponseEntity<CartItemResponse> updateCartItem(
             @PathVariable @Positive Long id,
             @RequestBody @Valid UpdateCartItemQuantityRequest request
@@ -85,7 +84,7 @@ public class CartItemController {
     }
 
     // GET total price of list cart items
-    @GetMapping("/carts/{cartId}/total-price")
+    @GetMapping("/api/v1/carts/{cartId}/items/total-price")
     public ResponseEntity<CartTotalPriceResponse> getCartTotalPriceByCartId(
             @PathVariable @Positive Long cartId
     )
@@ -97,7 +96,7 @@ public class CartItemController {
                 .body(new CartTotalPriceResponse(cartId,totalPrice));
     }
     // VALIDATE cart item before converting it to an order item
-    @GetMapping("/carts/{cartId}/products/{productId}/validation")
+    @GetMapping("/api/v1/carts/{cartId}/items/{productId}/validation")
     public ResponseEntity<ProductResponse> validateCartItem(
             @PathVariable @Positive Long cartId,
             @PathVariable @Positive Long productId
