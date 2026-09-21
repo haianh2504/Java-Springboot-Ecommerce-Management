@@ -14,6 +14,7 @@ import product.service.ProductManagementService;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -95,6 +96,32 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.name").value("Mechanical Keyboard"));
 
         verify(productManagementService).findProductByName(PRODUCT_NAME);
+    }
+
+    @Test
+    void searchProducts_validFilters_returnsProductList() throws Exception {
+        BigDecimal minPrice = new BigDecimal("50.00");
+        BigDecimal maxPrice = new BigDecimal("100.00");
+        when(productManagementService.searchProducts(
+                minPrice,
+                maxPrice,
+                ProductStatus.ACTIVE
+        )).thenReturn(List.of(persistedProduct()));
+
+        mockMvc.perform(get("/api/v1/products")
+                        .param("minPrice", "50.00")
+                        .param("maxPrice", "100.00")
+                        .param("status", "ACTIVE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].name").value("Mechanical Keyboard"))
+                .andExpect(jsonPath("$[0].status").value("ACTIVE"));
+
+        verify(productManagementService).searchProducts(
+                minPrice,
+                maxPrice,
+                ProductStatus.ACTIVE
+        );
     }
 
     @Test

@@ -2,8 +2,10 @@ package product.service;
 
 import product.entities.Product;
 import product.entities.ProductName;
+import product.entities.ProductStatus;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public interface ProductManagementService {
 //    create new product
@@ -17,6 +19,13 @@ public interface ProductManagementService {
 
 //    find Product by name
     public Product findProductByName(ProductName name);
+
+//    search products by optional price range and status
+    public List<Product> searchProducts(
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            ProductStatus status
+    );
 
 //    update product name - need authorize
     public Product updateProductName(Long productId, ProductName newName);

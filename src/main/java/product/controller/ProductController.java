@@ -3,6 +3,7 @@ package product.controller;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,7 +11,11 @@ import product.dto.request.*;
 import product.dto.response.ProductResponse;
 import product.entities.Product;
 import product.entities.ProductName;
+import product.entities.ProductStatus;
 import product.service.ProductManagementService;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -53,6 +58,21 @@ public final class ProductController {
                 new ProductName(name)
         );
         return ResponseEntity.ok(ProductResponse.from(persistedProduct));
+    }
+
+    // SEARCH products by optional price range and status
+    @GetMapping(params = "!name") // không có para named "name"
+    public ResponseEntity<List<ProductResponse>> searchProducts(
+            @RequestParam(required = false) @PositiveOrZero BigDecimal minPrice,
+            @RequestParam(required = false) @PositiveOrZero BigDecimal maxPrice,
+            @RequestParam(required = false) ProductStatus status
+    ) {
+        List<ProductResponse> response = productManagementService
+                .searchProducts(minPrice, maxPrice, status)
+                .stream()
+                .map(ProductResponse::from)
+                .toList();
+        return ResponseEntity.ok(response);
     }
 
     // UPDATE product name

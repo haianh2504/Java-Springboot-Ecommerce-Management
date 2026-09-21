@@ -16,6 +16,7 @@ import product.repository.ProductRepository;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -138,6 +139,43 @@ class ProductManagementServiceImplTest {
                 () -> assertSame(product, service.findProductById(PRODUCT_ID)),
                 () -> assertSame(product, service.findProductByName(NAME))
         );
+    }
+
+    @Test
+    @DisplayName("Search products by optional price range and status")
+    void searchProducts_validFilters_returnsProducts() {
+        BigDecimal minPrice = new BigDecimal("50.00");
+        BigDecimal maxPrice = new BigDecimal("100.00");
+        List<Product> products = List.of(persistedProduct());
+        when(productRepository.search(minPrice, maxPrice, ProductStatus.ACTIVE))
+                .thenReturn(products);
+
+        List<Product> actual = service.searchProducts(
+                minPrice,
+                maxPrice,
+                ProductStatus.ACTIVE
+        );
+
+        assertSame(products, actual);
+        verify(productRepository).search(minPrice, maxPrice, ProductStatus.ACTIVE);
+    }
+
+    @Test
+    @DisplayName("Reject an invalid product price range")
+    void searchProducts_invalidPriceRange_throwsException() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class,
+                        () -> service.searchProducts(new BigDecimal("-1"), null, null)),
+                () -> assertThrows(IllegalArgumentException.class,
+                        () -> service.searchProducts(null, new BigDecimal("-1"), null)),
+                () -> assertThrows(IllegalArgumentException.class,
+                        () -> service.searchProducts(
+                                new BigDecimal("100"),
+                                new BigDecimal("50"),
+                                null
+                        ))
+        );
+        verifyNoInteractions(productRepository);
     }
 
     @Test

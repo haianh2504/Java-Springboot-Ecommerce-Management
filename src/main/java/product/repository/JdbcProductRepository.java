@@ -6,6 +6,8 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -142,6 +144,55 @@ public final class JdbcProductRepository implements ProductRepository {
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error while searching for product: " + e.getMessage(),e);
+        }
+    }
+//    search products by optional price range and status
+    @Override
+    public List<Product> search(
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            ProductStatus status
+    ) {
+        StringBuilder sql = new StringBuilder("""
+                SELECT id, name, quantity, price, status, created_at
+                FROM products
+                WHERE 1 = 1
+                """);
+        List<Object> parameters = new ArrayList<>();
+
+        if (minPrice != null) {
+            sql.append(" AND price >= ?");
+            parameters.add(minPrice);
+        }
+        if (maxPrice != null) {
+            sql.append(" AND price <= ?");
+            parameters.add(maxPrice);
+        }
+        if (status != null) {
+            sql.append(" AND status = ?");
+            parameters.add(status.name());
+        }
+        sql.append(" ORDER BY id");
+
+        try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+            for (int index = 0; index < parameters.size(); index++) {
+                Object parameter = parameters.get(index);
+                if (parameter instanceof BigDecimal price) {
+                    ps.setBigDecimal(index + 1, price);
+                } else {
+                    ps.setString(index + 1, parameter.toString());
+                }
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                List<Product> products = new ArrayList<>();
+                while (rs.next()) {
+                    products.add(mapProduct(rs));
+                }
+                return products;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error while searching for products: " + e.getMessage(), e);
         }
     }
 //    delete product by id

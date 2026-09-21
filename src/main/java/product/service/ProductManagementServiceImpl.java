@@ -8,6 +8,7 @@ import product.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -67,6 +68,24 @@ public class ProductManagementServiceImpl implements ProductManagementService{
                         () -> new ProductNotFoundException(productName)
                 );
         return product;
+    }
+//    search products by optional price range and status
+    @Override
+    public List<Product> searchProducts(
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            ProductStatus status
+    ) {
+        if (minPrice != null && minPrice.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Minimum price cannot be negative");
+        }
+        if (maxPrice != null && maxPrice.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Maximum price cannot be negative");
+        }
+        if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
+            throw new IllegalArgumentException("Minimum price cannot be greater than maximum price");
+        }
+        return productRepository.search(minPrice, maxPrice, status);
     }
 //    update product name - need auth
     @Override
