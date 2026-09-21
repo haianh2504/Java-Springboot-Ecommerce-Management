@@ -10,11 +10,13 @@ import exception.resource.detailed_exceptions.ProductNotFoundException;
 import product.entities.Product;
 import product.entities.ProductStatus;
 import product.repository.ProductRepository;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 
+@Service
 public class CartItemManagementServiceImpl implements  CartItemManagementService {
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;

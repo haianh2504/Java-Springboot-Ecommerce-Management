@@ -15,12 +15,14 @@ import product.entities.Product;
 import product.service.ProductManagementService;
 import shipping.ShippingStrategy;
 import transaction_management.TransactionManagement;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@Service
 public class CheckoutServiceImpl implements CheckoutService {
     private final CartManagementService cartManagementService;
     private final CartItemManagementService cartItemManagementService;

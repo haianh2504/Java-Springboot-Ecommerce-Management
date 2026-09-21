@@ -7,9 +7,11 @@ import exception.business.detailed_exceptions.UserNotAuthorizedException;
 import exception.resource.detailed_exceptions.UserNotFoundException;
 import user.repository.UserRepository;
 import user.entities.*;
+import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 
+@Service
 public final class UserManageServiceImpl implements UserManagementService{
     // Lấy UserRepository làm biến tham chiếu quyết định các phương thức
     private final UserRepository userRepository;

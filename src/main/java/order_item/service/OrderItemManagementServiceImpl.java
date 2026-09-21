@@ -6,6 +6,7 @@ import exception.resource.detailed_exceptions.OrderNotFoundException;
 import order.repository.OrderRepository;
 import order_item.entities.OrderItem;
 import order_item.repository.OrderItemRepository;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+@Service
 public class OrderItemManagementServiceImpl implements OrderItemManagementService{
     private final OrderItemRepository orderItemRepository;
     private final OrderRepository orderRepository;

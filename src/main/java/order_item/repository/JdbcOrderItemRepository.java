@@ -1,6 +1,7 @@
 package order_item.repository;
 
 import order_item.entities.OrderItem;
+import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+@Repository
 public class JdbcOrderItemRepository implements OrderItemRepository {
     private final Connection connection;
     public JdbcOrderItemRepository(Connection connection) {

@@ -4,10 +4,12 @@ import exception.resource.detailed_exceptions.OrderNotFoundException;
 import order.entities.Order;
 import order.entities.OrderStatus;
 import order.repository.OrderRepository;
+import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 
+@Service
 public class OrderManagementServiceImpl implements OrderManagementService {
     private final OrderRepository orderRepository;
 //    constructor

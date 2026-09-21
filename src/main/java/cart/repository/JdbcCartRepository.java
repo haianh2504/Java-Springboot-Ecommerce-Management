@@ -2,6 +2,7 @@ package cart.repository;
 
 import cart.entities.Cart;
 import cart.entities.CartStatus;
+import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+@Repository
 public class JdbcCartRepository implements CartRepository {
     private final Connection connection;
 //    constructor

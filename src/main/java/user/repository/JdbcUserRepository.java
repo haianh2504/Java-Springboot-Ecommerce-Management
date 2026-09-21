@@ -1,12 +1,14 @@
 package user.repository;
 
 import user.entities.*;
+import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 
+@Repository
 public final class JdbcUserRepository implements UserRepository{
     // repository needs connection to communicate with DATABASE
     private final Connection connection;

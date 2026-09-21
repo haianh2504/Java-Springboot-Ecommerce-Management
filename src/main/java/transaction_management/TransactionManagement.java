@@ -1,9 +1,12 @@
 package transaction_management;
 
+import org.springframework.stereotype.Component;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Objects;
 
+@Component
 public class TransactionManagement {
     private final Connection connection;
 

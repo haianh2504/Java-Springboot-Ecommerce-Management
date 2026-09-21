@@ -5,11 +5,13 @@ import exception.business.detailed_exceptions.InsufficientStockException;
 import exception.resource.detailed_exceptions.ProductNotFoundException;
 import product.entities.*;
 import product.repository.ProductRepository;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.Optional;
 
+@Service
 public class ProductManagementServiceImpl implements ProductManagementService{
     private final ProductRepository productRepository;
 //    constructor

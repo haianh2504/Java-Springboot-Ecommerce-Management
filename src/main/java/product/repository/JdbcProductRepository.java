@@ -1,6 +1,7 @@
 package product.repository;
 
 import product.entities.*;
+import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.sql.*;
@@ -8,6 +9,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 
+@Repository
 public final class JdbcProductRepository implements ProductRepository {
     private final Connection connection;
 //    constructor

@@ -10,10 +10,12 @@ import exception.resource.detailed_exceptions.UserNotFoundException;
 import user.entities.User;
 import user.entities.UserStatus;
 import user.repository.UserRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
 
+@Service
 public class CartManagementServiceImpl implements CartManagementService {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;

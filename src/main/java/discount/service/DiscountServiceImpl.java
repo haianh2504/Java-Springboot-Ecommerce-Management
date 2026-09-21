@@ -1,8 +1,11 @@
 package discount.service;
 
+import org.springframework.stereotype.Service;
+
 import java.math.BigDecimal;
 import java.util.Objects;
 
+@Service
 public class DiscountServiceImpl implements DiscountService {
     @Override
     public BigDecimal calculateDiscountAmount(BigDecimal subTotal) {
