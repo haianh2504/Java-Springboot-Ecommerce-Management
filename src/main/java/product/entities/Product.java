@@ -1,15 +1,54 @@
 package product.entities;
 
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.Check;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import product.entities.name.ProductName;
+import product.entities.name.ProductNameConverter;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Objects;
 
+@Entity
+@Table(
+        name = "products",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uq_products_name",
+                        columnNames = {"name"}
+                )
+        }
+)
+@Check(constraints = "btrim(name) <> ''")
+@Check(constraints = "quantity >= 0")
+@Check(constraints = "price > 0")
+@Access(AccessType.FIELD)
 public class Product {
+    @Id // signed as PRIMARY KEY
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Convert(converter = ProductNameConverter.class)
+    @Column(name = "name", nullable = false, length = 255)
     private ProductName name;
+
+    @Column(name = "quantity", nullable = false)
     private int stockQuantity;
+
+    @Column(name = "price", nullable = false, precision = 19, scale = 2)
     private BigDecimal basePrice;
+
+    @Enumerated(EnumType.STRING) // Quyết định cách mà Java Enum sẽ được biểu diễn khi lưu vào database.
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "status", nullable = false, columnDefinition = "product_status_enum")
     private ProductStatus status;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
     public Product(ProductName name, int stockQuantity, BigDecimal basePrice, ProductStatus status)
     {
@@ -25,6 +64,9 @@ public class Product {
         this.status = Objects.requireNonNull(status,"Product status cannot be null");
         this.createdAt = Instant.now();
     }
+//    No argument constructor
+    protected Product() {}
+
 //    constructor to return product from database
     public Product(Long id, ProductName name, int stockQuantity, BigDecimal basePrice, ProductStatus status, Instant createdAt)
     {

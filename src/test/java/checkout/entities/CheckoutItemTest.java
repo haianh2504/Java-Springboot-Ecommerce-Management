@@ -8,7 +8,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import product.entities.Product;
-import product.entities.ProductName;
+import product.entities.name.ProductName;
 import product.entities.ProductStatus;
 
 import java.math.BigDecimal;

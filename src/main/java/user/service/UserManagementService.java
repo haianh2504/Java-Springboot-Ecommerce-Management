@@ -1,6 +1,9 @@
 package user.service;
 
 import user.entities.*;
+import user.entities.email.Email;
+import user.entities.person_name.PersonName;
+import user.entities.phone_number.PhoneNumber;
 
 public interface UserManagementService {
 //    find user by ID

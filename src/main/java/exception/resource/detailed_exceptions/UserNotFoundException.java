@@ -1,7 +1,7 @@
 package exception.resource.detailed_exceptions;
 
 import exception.resource.ResourceException;
-import user.entities.Email;
+import user.entities.email.Email;
 
 public class UserNotFoundException extends ResourceException {
     // id

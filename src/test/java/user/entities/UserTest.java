@@ -5,6 +5,10 @@ import exception.business.detailed_exceptions.UserAlreadyActive;
 import exception.business.detailed_exceptions.UserAlreadyBanned;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import user.entities.email.Email;
+import user.entities.password_hash.PasswordHash;
+import user.entities.person_name.PersonName;
+import user.entities.phone_number.PhoneNumber;
 
 import java.time.Instant;
 

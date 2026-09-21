@@ -15,6 +15,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import user.entities.*;
+import user.entities.email.Email;
+import user.entities.password_hash.PasswordHash;
+import user.entities.person_name.PersonName;
+import user.entities.phone_number.PhoneNumber;
 import user.repository.UserRepository;
 
 import java.time.Instant;

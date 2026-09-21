@@ -1,4 +1,4 @@
-package user.entities;
+package user.entities.phone_number;
 
 public record PhoneNumber(String phoneNumber) {
     public PhoneNumber{

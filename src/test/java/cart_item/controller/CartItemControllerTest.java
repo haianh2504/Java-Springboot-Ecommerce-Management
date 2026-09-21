@@ -11,7 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import product.entities.Product;
-import product.entities.ProductName;
+import product.entities.name.ProductName;
 import product.entities.ProductStatus;
 
 import java.math.BigDecimal;

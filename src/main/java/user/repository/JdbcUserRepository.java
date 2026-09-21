@@ -2,6 +2,10 @@ package user.repository;
 
 import user.entities.*;
 import org.springframework.stereotype.Repository;
+import user.entities.email.Email;
+import user.entities.password_hash.PasswordHash;
+import user.entities.person_name.PersonName;
+import user.entities.phone_number.PhoneNumber;
 
 import java.sql.*;
 import java.time.Instant;

@@ -1,6 +1,6 @@
 package user.service;
 
-import user.entities.PasswordHash;
+import user.entities.password_hash.PasswordHash;
 import user.entities.RawPassword;
 
 public interface PasswordHasher {

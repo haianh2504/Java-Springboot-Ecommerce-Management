@@ -5,9 +5,8 @@ import checkout.entities.CheckoutItem;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import product.entities.Product;
-import product.entities.ProductName;
+import product.entities.name.ProductName;
 import product.entities.ProductStatus;
-import shipping.FlatRateShippingStrategy;
 
 import java.math.BigDecimal;
 import java.util.List;

@@ -1,7 +1,7 @@
 package product.repository;
 
 import product.entities.Product;
-import product.entities.ProductName;
+import product.entities.name.ProductName;
 import product.entities.ProductStatus;
 
 import java.math.BigDecimal;

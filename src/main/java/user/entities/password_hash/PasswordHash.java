@@ -1,4 +1,4 @@
-package user.entities;
+package user.entities.password_hash;
 
 import java.util.Objects;
 

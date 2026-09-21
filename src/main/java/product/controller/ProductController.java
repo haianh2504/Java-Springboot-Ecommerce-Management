@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import product.dto.request.*;
 import product.dto.response.ProductResponse;
 import product.entities.Product;
-import product.entities.ProductName;
+import product.entities.name.ProductName;
 import product.entities.ProductStatus;
 import product.service.ProductManagementService;
 

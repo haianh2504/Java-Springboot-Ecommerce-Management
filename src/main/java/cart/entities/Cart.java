@@ -6,6 +6,8 @@ import exception.business.detailed_exceptions.CartAlreadyCheckedOutException;
 import java.time.Instant;
 import java.util.*;
 
+@Entity
+@Tables()
 public class Cart{
     private Long cartId;
     private Long userId;

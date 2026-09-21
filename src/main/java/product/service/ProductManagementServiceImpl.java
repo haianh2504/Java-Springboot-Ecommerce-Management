@@ -4,6 +4,7 @@ import exception.business.detailed_exceptions.ProductNameAlreadyInUseException;
 import exception.business.detailed_exceptions.InsufficientStockException;
 import exception.resource.detailed_exceptions.ProductNotFoundException;
 import product.entities.*;
+import product.entities.name.ProductName;
 import product.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 

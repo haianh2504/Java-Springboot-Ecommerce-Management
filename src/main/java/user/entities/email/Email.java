@@ -1,4 +1,4 @@
-package user.entities;
+package user.entities.email;
 
 public record Email(String email) {
     public Email{

@@ -2,6 +2,7 @@ package product.repository;
 
 import product.entities.*;
 import org.springframework.stereotype.Repository;
+import product.entities.name.ProductName;
 
 import java.math.BigDecimal;
 import java.sql.*;

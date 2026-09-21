@@ -2,7 +2,7 @@ package user.service;
 
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.stereotype.Service;
-import user.entities.PasswordHash;
+import user.entities.password_hash.PasswordHash;
 import user.entities.RawPassword;
 
 // chưa học spring security

@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.*;
 import user.dto.request.*;
 import user.dto.response.UserResponse;
 import user.entities.*;
+import user.entities.email.Email;
+import user.entities.person_name.PersonName;
+import user.entities.phone_number.PhoneNumber;
 import user.service.UserManagementService;
 
 @RestController

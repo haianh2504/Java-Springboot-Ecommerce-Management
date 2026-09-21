@@ -1,4 +1,4 @@
-package user.entities;
+package user.entities.person_name;
 
 public record PersonName(String name) {
 

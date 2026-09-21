@@ -1,7 +1,7 @@
 package exception.resource.detailed_exceptions;
 
 import exception.resource.ResourceException;
-import product.entities.ProductName;
+import product.entities.name.ProductName;
 
 public class ProductNotFoundException extends ResourceException
 {

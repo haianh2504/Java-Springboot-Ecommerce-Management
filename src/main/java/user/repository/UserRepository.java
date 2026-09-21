@@ -1,7 +1,7 @@
 package user.repository;
 
-import user.entities.Email;
-import user.entities.PhoneNumber;
+import user.entities.email.Email;
+import user.entities.phone_number.PhoneNumber;
 import user.entities.User;
 
 import java.util.Optional;

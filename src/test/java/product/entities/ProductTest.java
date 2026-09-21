@@ -2,6 +2,7 @@ package product.entities;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import product.entities.name.ProductName;
 
 import java.math.BigDecimal;
 import java.time.Instant;

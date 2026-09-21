@@ -3,7 +3,7 @@ package user.service;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import user.entities.PasswordHash;
+import user.entities.password_hash.PasswordHash;
 import user.entities.RawPassword;
 
 class BCryptPasswordHasherTest {
