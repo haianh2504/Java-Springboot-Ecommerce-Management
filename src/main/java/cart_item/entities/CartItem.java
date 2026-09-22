@@ -1,12 +1,57 @@
 package cart_item.entities;
 
+import jakarta.persistence.*;
+import jakarta.validation.Constraint;
+import org.hibernate.annotations.Check;
+import org.hibernate.annotations.ColumnDefault;
+
 import java.util.Objects;
 
+@Entity
+@Table(
+        name = "cart_items",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uq_cart_items_cart_product",
+                        columnNames = {"cart_id", "product_id"}
+                )
+        },
+        indexes = {
+                @Index(
+                        name = "idx_cart_items_product_id",
+                        columnList = "product_id"
+                )
+        }
+)
+@Check(
+        name = "ck_cart_items_quantity_positive",
+        constraints = "quantity > 0"
+)
 public class CartItem {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long cartItemId;
+
+    @Column(
+            name = "cart_id",
+            nullable = false
+    )
     private Long cartId;
+
+    @Column(
+            name = "product_id",
+            nullable = false,
+            updatable = false
+    )
     private Long productId;
+
+    @Column(name = "quantity", nullable = false)
+    @ColumnDefault("1")
     private int number;
+
+//    no argument constructor for JPA
+    protected CartItem() {}
 //    constructor for SQL return
     public CartItem(Long cartItemId, Long cartId, Long productId, int number)
     {

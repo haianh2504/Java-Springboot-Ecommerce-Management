@@ -1,14 +1,74 @@
 package order_item.entities;
 
+import jakarta.persistence.*;
+import org.hibernate.annotations.Check;
+
 import java.math.BigDecimal;
 import java.util.Objects;
 
+@Entity
+@Table(
+        name = "order_items",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uq_order_items_order_product",
+                        columnNames = {"order_id", "product_id"}
+                )
+        },
+        indexes = {
+                @Index(
+                        name = "idx_order_items_product_id",
+                        columnList = "product_id"
+                )
+        }
+)
+@Check(
+        name = "ck_order_items_quantity_positive",
+        constraints = "quantity > 0"
+)
+@Check(
+        name = "ck_order_items_unit_price_positive",
+        constraints = "unit_price > 0"
+)
+@Access(AccessType.FIELD)
 public class OrderItem {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(
+            name = "id",
+            nullable = false
+    )
     private Long orderItemId;
+
+    @Column(
+            name = "order_id",
+            nullable = false,
+            updatable = false
+    )
     private Long orderId;
-    private final Long productId;
+
+    @Column(
+            name = "product_id",
+            nullable = false,
+            updatable = false
+    )
+    private Long productId;
+
+    @Column(
+            name = "quantity",
+            nullable = false
+    )
     private int quantity;
-    private final BigDecimal unitPrice;
+
+    @Column(
+            name = "unit_price",
+            nullable = false,
+            precision = 19,
+            scale = 2
+    )
+    private BigDecimal unitPrice;
+    // No-argument constructor required by JPA
+    protected OrderItem() {}
 //    constructor for SQL return
     public OrderItem(Long orderItemId, Long orderId, Long productId, int quantity, BigDecimal unitPrice)
     {

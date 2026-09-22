@@ -1,23 +1,98 @@
 package order.entities;
 
+import jakarta.persistence.*;
+import org.hibernate.annotations.Check;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 
+@Entity
+@Table(
+        name = "orders",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uq_orders_cart",
+                        columnNames = {"cart_id"}
+                )
+        },
+        indexes = {
+                @Index(
+                        name = "idx_orders_user_created_at",
+                        columnList = "user_id, created_at DESC"
+                ),
+                @Index(
+                        name = "idx_orders_status_created_at",
+                        columnList = "status, created_at DESC"
+                )
+        }
+)
+@Check(
+        name = "ck_orders_sub_total_positive",
+        constraints = "sub_total > 0"
+)
+@Check(
+        name = "ck_orders_shipping_fee_non_negative",
+        constraints = "shipping_fee >= 0"
+)
+@Check(
+        name = "ck_orders_discount_non_negative",
+        constraints = "discount_amount >= 0"
+)
+@Check(
+        name = "ck_orders_discount_not_too_large",
+        constraints = "discount_amount <= sub_total + shipping_fee"
+)
+@Check(
+        name = "ck_orders_total_price_non_negative",
+        constraints = "total_price >= 0"
+)
+@Check(
+        name = "ck_orders_total_price_correct",
+        constraints = "total_price = sub_total + shipping_fee - discount_amount"
+)
+@Access(AccessType.FIELD)
 public class Order {
     // identity
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long orderId;
+
+    @Column(name = "cart_id", nullable = false)
     private Long cartId;
+
+    @Column(name = "user_id", nullable = false)
     private Long userId;
+
+
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "status", nullable = false, columnDefinition = "order_status_enum")
     private OrderStatus orderStatus; // initially PENDING
+
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
     // financial
+    @Column(name = "sub_total", nullable = false, precision = 19, scale = 2)
     private BigDecimal subTotal; // total final price of all product
+
+    @Column(name = "shipping_fee", nullable = false, precision = 19, scale = 2)
     private BigDecimal shippingFee;
+
+    @Column(name = "discount_amount", nullable = false, precision = 19, scale = 2)
     private BigDecimal discountAmount; // discount = 0 initially
+
+    @Column(name = "total_price", nullable = false, precision = 19, scale = 2)
     private BigDecimal totalPrice; // total price + shippingFee + discountAmount
+
+//    No argu constructor for JPA management
+    protected Order() {
+    }
+
 //    constructor - SQL return
     public Order(
             Long orderId,
