@@ -1,10 +1,10 @@
 package user.service;
 
-import exception.business.detailed_exceptions.AccountBannedException;
-import exception.business.detailed_exceptions.EmailAlreadyInUseException;
-import exception.business.detailed_exceptions.PhoneAlreadyInUseException;
-import exception.business.detailed_exceptions.UserNotAuthorizedException;
-import exception.resource.detailed_exceptions.UserNotFoundException;
+import common.exception.business.detailed_exceptions.AccountBannedException;
+import common.exception.business.detailed_exceptions.EmailAlreadyInUseException;
+import common.exception.business.detailed_exceptions.PhoneAlreadyInUseException;
+import common.exception.business.detailed_exceptions.UserNotAuthorizedException;
+import common.exception.resource.detailed_exceptions.UserNotFoundException;
 import user.entities.email.Email;
 import user.entities.password_hash.PasswordHash;
 import user.entities.person_name.PersonName;

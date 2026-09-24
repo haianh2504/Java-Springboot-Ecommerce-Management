@@ -1,6 +1,6 @@
-package exception.resource.detailed_exceptions;
+package common.exception.resource.detailed_exceptions;
 
-import exception.resource.ResourceException;
+import common.exception.resource.ResourceException;
 import product.entities.name.ProductName;
 
 public class ProductNotFoundException extends ResourceException

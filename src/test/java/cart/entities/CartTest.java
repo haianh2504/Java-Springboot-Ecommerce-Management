@@ -1,6 +1,6 @@
 package cart.entities;
 
-import exception.business.detailed_exceptions.CartAlreadyCheckedOutException;
+import common.exception.business.detailed_exceptions.CartAlreadyCheckedOutException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

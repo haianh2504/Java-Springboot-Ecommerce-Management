@@ -1,8 +1,8 @@
 package user.entities;
 
-import exception.business.detailed_exceptions.AccountBannedException;
-import exception.business.detailed_exceptions.UserAlreadyActive;
-import exception.business.detailed_exceptions.UserAlreadyBanned;
+import common.exception.business.detailed_exceptions.AccountBannedException;
+import common.exception.business.detailed_exceptions.UserAlreadyActive;
+import common.exception.business.detailed_exceptions.UserAlreadyBanned;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import user.entities.email.Email;

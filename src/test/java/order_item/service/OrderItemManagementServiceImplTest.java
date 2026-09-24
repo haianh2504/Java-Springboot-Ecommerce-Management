@@ -1,8 +1,8 @@
 package order_item.service;
 
-import exception.business.detailed_exceptions.OrderItemAlreadyExistsException;
-import exception.resource.detailed_exceptions.OrderItemNotFoundException;
-import exception.resource.detailed_exceptions.OrderNotFoundException;
+import common.exception.business.detailed_exceptions.OrderItemAlreadyExistsException;
+import common.exception.resource.detailed_exceptions.OrderItemNotFoundException;
+import common.exception.resource.detailed_exceptions.OrderNotFoundException;
 import order.entities.Order;
 import order.repository.OrderRepository;
 import order_item.entities.OrderItem;

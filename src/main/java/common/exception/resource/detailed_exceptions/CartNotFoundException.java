@@ -1,6 +1,6 @@
-package exception.resource.detailed_exceptions;
+package common.exception.resource.detailed_exceptions;
 
-import exception.resource.ResourceException;
+import common.exception.resource.ResourceException;
 
 public class CartNotFoundException extends ResourceException {
     public CartNotFoundException(Long id) {

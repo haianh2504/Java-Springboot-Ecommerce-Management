@@ -1,8 +1,8 @@
 package product.service;
 
-import exception.business.detailed_exceptions.InsufficientStockException;
-import exception.business.detailed_exceptions.ProductNameAlreadyInUseException;
-import exception.resource.detailed_exceptions.ProductNotFoundException;
+import common.exception.business.detailed_exceptions.InsufficientStockException;
+import common.exception.business.detailed_exceptions.ProductNameAlreadyInUseException;
+import common.exception.resource.detailed_exceptions.ProductNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

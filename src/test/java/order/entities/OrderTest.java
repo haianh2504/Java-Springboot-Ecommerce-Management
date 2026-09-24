@@ -30,7 +30,7 @@ public class OrderTest {
         @DisplayName("Construct an order from valid SQL data")
         void constructOrder_validSqlData() {
             Order order = new Order(
-                    ORDER_ID, USER_ID, CART_ID, OrderStatus.SUCESSFUL, CREATED_AT,
+                    ORDER_ID, USER_ID, CART_ID, OrderStatus.SUCCESSFUL, CREATED_AT,
                     SUB_TOTAL, SHIPPING_FEE, DISCOUNT_AMOUNT, TOTAL_PRICE
             );
 
@@ -38,7 +38,7 @@ public class OrderTest {
                     () -> Assertions.assertEquals(ORDER_ID, order.getOrderId()),
                     () -> Assertions.assertEquals(USER_ID, order.getUserId()),
                     () -> Assertions.assertEquals(CART_ID, order.getCartId()),
-                    () -> Assertions.assertEquals(OrderStatus.SUCESSFUL, order.getOrderStatus()),
+                    () -> Assertions.assertEquals(OrderStatus.SUCCESSFUL, order.getOrderStatus()),
                     () -> Assertions.assertEquals(CREATED_AT, order.getCreatedAt()),
                     () -> Assertions.assertEquals(SUB_TOTAL, order.getSubTotal()),
                     () -> Assertions.assertEquals(SHIPPING_FEE, order.getShippingFee()),
@@ -82,19 +82,19 @@ public class OrderTest {
         static Stream<Arguments> requiredNullArguments() {
             return Stream.of(
                     Arguments.of("orderId", "orderId cannot be null", null, USER_ID, CART_ID,
-                            OrderStatus.SUCESSFUL, CREATED_AT, SUB_TOTAL, TOTAL_PRICE),
+                            OrderStatus.SUCCESSFUL, CREATED_AT, SUB_TOTAL, TOTAL_PRICE),
                     Arguments.of("userId", "userId cannot be null", ORDER_ID, null, CART_ID,
-                            OrderStatus.SUCESSFUL, CREATED_AT, SUB_TOTAL, TOTAL_PRICE),
+                            OrderStatus.SUCCESSFUL, CREATED_AT, SUB_TOTAL, TOTAL_PRICE),
                     Arguments.of("cartId", "cartId cannot be null", ORDER_ID, USER_ID, null,
-                            OrderStatus.SUCESSFUL, CREATED_AT, SUB_TOTAL, TOTAL_PRICE),
+                            OrderStatus.SUCCESSFUL, CREATED_AT, SUB_TOTAL, TOTAL_PRICE),
                     Arguments.of("orderStatus", "orderStatus cannot be null", ORDER_ID, USER_ID, CART_ID,
                             null, CREATED_AT, SUB_TOTAL, TOTAL_PRICE),
                     Arguments.of("createdAt", "createdAt cannot be null", ORDER_ID, USER_ID, CART_ID,
-                            OrderStatus.SUCESSFUL, null, SUB_TOTAL, TOTAL_PRICE),
+                            OrderStatus.SUCCESSFUL, null, SUB_TOTAL, TOTAL_PRICE),
                     Arguments.of("subTotal", "subTotal cannot be null", ORDER_ID, USER_ID, CART_ID,
-                            OrderStatus.SUCESSFUL, CREATED_AT, null, TOTAL_PRICE),
+                            OrderStatus.SUCCESSFUL, CREATED_AT, null, TOTAL_PRICE),
                     Arguments.of("totalPrice", "totalPrice cannot be null", ORDER_ID, USER_ID, CART_ID,
-                            OrderStatus.SUCESSFUL, CREATED_AT, SUB_TOTAL, null)
+                            OrderStatus.SUCCESSFUL, CREATED_AT, SUB_TOTAL, null)
             );
         }
     }

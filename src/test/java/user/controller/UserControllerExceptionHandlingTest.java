@@ -1,8 +1,8 @@
 package user.controller;
 
-import exception.business.detailed_exceptions.EmailAlreadyInUseException;
-import exception.global_exception_handler.GlobalExceptionHandler;
-import exception.resource.detailed_exceptions.UserNotFoundException;
+import common.exception.business.detailed_exceptions.EmailAlreadyInUseException;
+import common.exception.global_exception_handler.GlobalExceptionHandler;
+import common.exception.resource.detailed_exceptions.UserNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;

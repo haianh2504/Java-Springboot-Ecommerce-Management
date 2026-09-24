@@ -1,4 +1,4 @@
-package exception.business;
+package common.exception.business;
 
 public abstract class BusinessException extends RuntimeException {
     public BusinessException(String message) {

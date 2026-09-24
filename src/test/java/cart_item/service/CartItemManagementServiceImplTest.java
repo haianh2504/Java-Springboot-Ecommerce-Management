@@ -2,11 +2,11 @@ package cart_item.service;
 
 import cart_item.entities.CartItem;
 import cart_item.repository.CartItemRepository;
-import exception.business.detailed_exceptions.CartItemAlreadyExistsException;
-import exception.business.detailed_exceptions.InsufficientStockException;
-import exception.business.detailed_exceptions.ProductInactiveException;
-import exception.resource.detailed_exceptions.CartItemNotFoundException;
-import exception.resource.detailed_exceptions.ProductNotFoundException;
+import common.exception.business.detailed_exceptions.CartItemAlreadyExistsException;
+import common.exception.business.detailed_exceptions.InsufficientStockException;
+import common.exception.business.detailed_exceptions.ProductInactiveException;
+import common.exception.resource.detailed_exceptions.CartItemNotFoundException;
+import common.exception.resource.detailed_exceptions.ProductNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

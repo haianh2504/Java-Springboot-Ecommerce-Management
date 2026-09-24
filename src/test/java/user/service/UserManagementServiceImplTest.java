@@ -1,10 +1,10 @@
 package user.service;
-import exception.business.detailed_exceptions.EmailAlreadyInUseException;
-import exception.business.detailed_exceptions.PhoneAlreadyInUseException;
-import exception.business.detailed_exceptions.AccountBannedException;
-import exception.business.detailed_exceptions.UserNotAuthorizedException;
-import exception.business.detailed_exceptions.UserAlreadyActive;
-import exception.resource.detailed_exceptions.UserNotFoundException;
+import common.exception.business.detailed_exceptions.EmailAlreadyInUseException;
+import common.exception.business.detailed_exceptions.PhoneAlreadyInUseException;
+import common.exception.business.detailed_exceptions.AccountBannedException;
+import common.exception.business.detailed_exceptions.UserNotAuthorizedException;
+import common.exception.business.detailed_exceptions.UserAlreadyActive;
+import common.exception.resource.detailed_exceptions.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

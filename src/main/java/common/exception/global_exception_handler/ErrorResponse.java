@@ -1,4 +1,4 @@
-package exception.global_exception_handler;
+package common.exception.global_exception_handler;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

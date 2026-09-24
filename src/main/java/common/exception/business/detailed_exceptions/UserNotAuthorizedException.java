@@ -1,6 +1,6 @@
-package exception.business.detailed_exceptions;
+package common.exception.business.detailed_exceptions;
 
-import exception.business.BusinessException;
+import common.exception.business.BusinessException;
 
 public final class UserNotAuthorizedException extends BusinessException {
     public UserNotAuthorizedException() {

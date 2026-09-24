@@ -1,5 +1,5 @@
-package exception.business.detailed_exceptions;
-import exception.business.BusinessException;
+package common.exception.business.detailed_exceptions;
+import common.exception.business.BusinessException;
 
 public final class EmailAlreadyInUseException extends BusinessException {
     public  EmailAlreadyInUseException() {
