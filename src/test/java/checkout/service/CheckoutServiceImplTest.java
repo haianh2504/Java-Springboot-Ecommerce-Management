@@ -6,10 +6,10 @@ import cart.service.CartManagementService;
 import cart_item.entities.CartItem;
 import cart_item.service.CartItemManagementService;
 import discount.service.DiscountService;
-import exception.business.detailed_exceptions.CartIsEmptyException;
-import exception.business.detailed_exceptions.CartOwnershipMismatchException;
-import exception.business.detailed_exceptions.InsufficientStockException;
-import exception.resource.detailed_exceptions.CartNotFoundException;
+import common.exception.business.detailed_exceptions.CartIsEmptyException;
+import common.exception.business.detailed_exceptions.CartOwnershipMismatchException;
+import common.exception.business.detailed_exceptions.InsufficientStockException;
+import common.exception.resource.detailed_exceptions.CartNotFoundException;
 import order.entities.Order;
 import order.entities.OrderStatus;
 import order.service.OrderManagementService;
@@ -24,6 +24,8 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
 import product.entities.Product;
 import product.entities.name.ProductName;
 import product.entities.ProductStatus;
@@ -33,8 +35,6 @@ import transaction_management.TransactionManagement;
 import transaction_management.TransactionWork;
 
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
 import java.util.stream.Stream;
@@ -319,11 +319,12 @@ class CheckoutServiceImplTest {
 
     @Test
     @DisplayName("Atomic stock-decrease failure rolls back and prevents the cart from becoming checked out")
-    void checkout_stockDecreaseFails_rollsBackAndDoesNotCheckoutCart() throws SQLException
+    void checkout_stockDecreaseFails_rollsBackAndDoesNotCheckoutCart()
     {
         // --GIVEN--
-        Connection connection = mock(Connection.class);
-        when(connection.getAutoCommit()).thenReturn(true);
+        PlatformTransactionManager springTransactionManager = mock(PlatformTransactionManager.class);
+        TransactionStatus transactionStatus = mock(TransactionStatus.class);
+        when(springTransactionManager.getTransaction(any())).thenReturn(transactionStatus);
         CheckoutServiceImpl checkoutServiceWithRealTransaction = new CheckoutServiceImpl(
                 cartManagementService,
                 cartItemManagementService,
@@ -332,7 +333,7 @@ class CheckoutServiceImplTest {
                 orderManagementService,
                 orderItemManagementService,
                 productManagementService,
-                new TransactionManagement(connection)
+                new TransactionManagement(springTransactionManager)
         );
         CartItem cartItem = new CartItem(1L, CART_ID, 101L, 2);
         Product product = createProduct(101L, "E-book", "50.00", 2);
@@ -364,9 +365,8 @@ class CheckoutServiceImplTest {
         );
         verify(productManagementService).decreaseStockQuantity(101L, 2);
         verify(cartManagementService).checkoutCart(CART_ID);
-        verify(connection).rollback();
-        verify(connection, never()).commit();
-        verify(connection).setAutoCommit(true);
+        verify(springTransactionManager).rollback(transactionStatus);
+        verify(springTransactionManager, never()).commit(any());
     }
 
     private void executeTransactionWorkImmediately()

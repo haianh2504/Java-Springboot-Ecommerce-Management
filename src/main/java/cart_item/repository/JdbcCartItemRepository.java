@@ -1,6 +1,7 @@
 package cart_item.repository;
 
 import cart_item.entities.CartItem;
+import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
@@ -10,13 +11,18 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Objects;
+import javax.sql.DataSource;
 
 @Repository
 public class JdbcCartItemRepository implements CartItemRepository {
-    private final Connection connection;
+    private final DataSource dataSource;
 //    constructor
-    public JdbcCartItemRepository(Connection connection) {
-        this.connection = connection;
+    public JdbcCartItemRepository(DataSource dataSource) {
+        // DataSource thay thế Connection singleton và hỗ trợ connection pool của Spring Boot.
+        this.dataSource = new TransactionAwareDataSourceProxy(
+                Objects.requireNonNull(dataSource, "DataSource cannot be null")
+        );
     }
 //    get all cart items by cart id
     @Override
@@ -31,7 +37,8 @@ public class JdbcCartItemRepository implements CartItemRepository {
                 WHERE cart_id = ?
                 """;
         List<CartItem> cartItems = new ArrayList<>();
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setLong(1, cartId);
             try(ResultSet rs = ps.executeQuery())
@@ -64,7 +71,8 @@ public class JdbcCartItemRepository implements CartItemRepository {
                 FROM cart_items
                 WHERE cart_id = ? AND product_id = ?;
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setLong(1, cartId);
             ps.setLong(2, productId);
@@ -97,7 +105,8 @@ public class JdbcCartItemRepository implements CartItemRepository {
                 quantity
                 FROM cart_items WHERE id = ?;
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setLong(1,cartItemId);
             try(ResultSet rs = ps.executeQuery())
@@ -127,7 +136,8 @@ public class JdbcCartItemRepository implements CartItemRepository {
                 VALUES(?, ?, ?)
                 RETURNING id
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setLong(1,cartItem.getCartId());
             ps.setLong(2, cartItem.getProductId());
@@ -156,7 +166,8 @@ public class JdbcCartItemRepository implements CartItemRepository {
                 DELETE FROM cart_items
                 WHERE cart_id = ?;
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setLong(1, cartId);
             ps.executeUpdate();
@@ -172,7 +183,8 @@ public class JdbcCartItemRepository implements CartItemRepository {
                 DELETE FROM cart_items
                 WHERE cart_id = ? AND product_id = ?;
         """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setLong(1, cartId);
             ps.setLong(2, productId);
@@ -190,7 +202,8 @@ public class JdbcCartItemRepository implements CartItemRepository {
                 DELETE FROM cart_items
                 WHERE id = ?;
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setLong(1, cartItemId);
             ps.executeUpdate();
@@ -208,7 +221,8 @@ public class JdbcCartItemRepository implements CartItemRepository {
                 SET quantity = ?
                 WHERE id = ?;
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setInt(1, cartItem.getNumber());
             ps.setLong(2, cartItem.getCartItemId());

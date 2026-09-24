@@ -2,6 +2,7 @@ package order.repository;
 
 import order.entities.Order;
 import order.entities.OrderStatus;
+import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
@@ -12,13 +13,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import javax.sql.DataSource;
 
 @Repository
 public class JdbcOrderRepository implements OrderRepository {
-    private final Connection connection;
+    private final DataSource dataSource;
 //    constructor
-    public JdbcOrderRepository(Connection connection) {
-        this.connection = Objects.requireNonNull(connection, "connection cannot be null");
+    public JdbcOrderRepository(DataSource dataSource) {
+        // Repository chỉ giữ DataSource; connection được lấy và trả lại theo từng thao tác.
+        this.dataSource = new TransactionAwareDataSourceProxy(
+                Objects.requireNonNull(dataSource, "DataSource cannot be null")
+        );
     }
 //    save order
     public Order save(Order order) {
@@ -36,7 +41,8 @@ public class JdbcOrderRepository implements OrderRepository {
                 VALUES(?,?,?,?,?,?,?,?)
                 RETURNING id
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setLong(1, order.getUserId());
             ps.setLong(2, order.getCartId());
@@ -75,7 +81,8 @@ public class JdbcOrderRepository implements OrderRepository {
                 SELECT * FROM orders WHERE user_id = ?;
         """;
         List<Order> orders = new ArrayList<>();
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setLong(1,userId);
             try(ResultSet rs = ps.executeQuery()){ // try-with-resource
@@ -108,7 +115,8 @@ public class JdbcOrderRepository implements OrderRepository {
         String sql = """
                 SELECT * FROM orders WHERE id = ?;
         """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
            ps.setLong(1,orderId);
            try(ResultSet rs = ps.executeQuery();){
@@ -141,7 +149,8 @@ public class JdbcOrderRepository implements OrderRepository {
         String sql = """
                 DELETE FROM orders WHERE id = ?;
         """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setLong(1,orderId);
             ps.executeUpdate();
@@ -163,7 +172,8 @@ public class JdbcOrderRepository implements OrderRepository {
                 total_price = ?
                 WHERE id = ?;
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setString(1, order.getOrderStatus().name());
             ps.setBigDecimal(2, order.getSubTotal());
@@ -183,7 +193,8 @@ public class JdbcOrderRepository implements OrderRepository {
         String sql = """
                 SELECT * FROM orders WHERE user_id = ? AND cart_id = ?;
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
          ps.setLong(1, userId);
          ps.setLong(2, cartId);

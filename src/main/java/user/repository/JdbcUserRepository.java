@@ -1,6 +1,7 @@
 package user.repository;
 
 import user.entities.*;
+import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
 import org.springframework.stereotype.Repository;
 import user.entities.email.Email;
 import user.entities.password_hash.PasswordHash;
@@ -11,15 +12,18 @@ import java.sql.*;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
+import javax.sql.DataSource;
 
 @Repository
-public final class JdbcUserRepository implements UserRepository{
-    // repository needs connection to communicate with DATABASE
-    private final Connection connection;
+public class JdbcUserRepository implements UserRepository{
+    private final DataSource dataSource;
 //    constructor
-    public JdbcUserRepository(Connection connection)
+    public JdbcUserRepository(DataSource dataSource)
     {
-        this.connection = Objects.requireNonNull(connection, "Connection cannot be null");
+        // Proxy bảo đảm các repository dùng chung connection khi đang ở trong cùng một transaction.
+        this.dataSource = new TransactionAwareDataSourceProxy(
+                Objects.requireNonNull(dataSource, "DataSource cannot be null")
+        );
     }
 //    save user
     @Override
@@ -39,7 +43,8 @@ public final class JdbcUserRepository implements UserRepository{
                 VALUES(?,?,?,?,?,?,?)
                 RETURNING id
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setString(1, user.getName().name());
             if(user.getPhoneNumber() != null){
@@ -94,7 +99,8 @@ public final class JdbcUserRepository implements UserRepository{
                 password_hash = ?
                 WHERE id = ?
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setString(1, user.getName().name());
             if(user.getPhoneNumber() == null)
@@ -131,7 +137,8 @@ public final class JdbcUserRepository implements UserRepository{
                 created_at
                 FROM users WHERE id = ?
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setLong(1, id);
             try(ResultSet rs = ps.executeQuery())
@@ -195,7 +202,8 @@ public final class JdbcUserRepository implements UserRepository{
                 FROM users
                 WHERE email = ?
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             // gán email vào ô ?
             ps.setString(1, email.toString());
@@ -250,7 +258,8 @@ public final class JdbcUserRepository implements UserRepository{
         String sql = """
                 SELECT * FROM users WHERE phone_number = ?;
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setString(1,phoneNumber.toString());
             try(ResultSet rs = ps.executeQuery())

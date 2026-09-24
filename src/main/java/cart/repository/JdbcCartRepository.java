@@ -2,6 +2,7 @@ package cart.repository;
 
 import cart.entities.Cart;
 import cart.entities.CartStatus;
+import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
@@ -12,13 +13,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import javax.sql.DataSource;
 
 @Repository
 public class JdbcCartRepository implements CartRepository {
-    private final Connection connection;
+    private final DataSource dataSource;
 //    constructor
-    public JdbcCartRepository(Connection connection){
-        this.connection = Objects.requireNonNull(connection, "Database connection undefined");
+    public JdbcCartRepository(DataSource dataSource){
+        // Mỗi thao tác tự lấy connection; proxy vẫn giữ cùng connection nếu có transaction đang chạy.
+        this.dataSource = new TransactionAwareDataSourceProxy(
+                Objects.requireNonNull(dataSource, "DataSource cannot be null")
+        );
     }
 //    Find cart by id
     @Override
@@ -31,7 +36,8 @@ public class JdbcCartRepository implements CartRepository {
                 status
                 FROM carts WHERE id = ?;
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             // add key word into ?
             ps.setLong(1, id);
@@ -67,7 +73,8 @@ public class JdbcCartRepository implements CartRepository {
                 FROM carts WHERE user_id = ?;
                 """;
         List<Cart> carts = new ArrayList<>();
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setLong(1, userId);
             try(ResultSet rs = ps.executeQuery())
@@ -101,7 +108,8 @@ public class JdbcCartRepository implements CartRepository {
                 ) VALUES (?, ?, ?)
                 RETURNING id
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setLong(1, cart.getUserId());
             ps.setTimestamp(2, java.sql.Timestamp.from(cart.getCreatedAt()));
@@ -129,7 +137,8 @@ public class JdbcCartRepository implements CartRepository {
         String sql = """
                 DELETE FROM carts WHERE id = ?;
         """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setLong(1, cartId);
             ps.executeUpdate();
@@ -147,7 +156,8 @@ public class JdbcCartRepository implements CartRepository {
                 status = ?
                 WHERE id = ?;
         """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setString(1,cart.getCartStatus().name());
             ps.setLong(2,cart.getCartId());
@@ -165,7 +175,8 @@ public class JdbcCartRepository implements CartRepository {
                 SET status = 'CHECKED_OUT'
                 WHERE id = ? AND status = 'ACTIVE';
                 """;
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, cartId);
             // PostgreSQL locks the matching cart row. A concurrent checkout waits,
             // then re-evaluates status after the first transaction commits/rolls back.

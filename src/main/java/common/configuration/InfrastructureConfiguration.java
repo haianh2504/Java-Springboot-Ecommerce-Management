@@ -1,21 +1,22 @@
-package configuration;
+package common.configuration;
 
-import common.DatabaseConnection;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import shipping.FlatRateShippingStrategy;
 import shipping.ShippingStrategy;
 
+import javax.sql.DataSource;
 import java.math.BigDecimal;
-import java.sql.Connection;
 
 @Configuration
 public class InfrastructureConfiguration {
 
-    @Bean(destroyMethod = "close")
-    public Connection databaseConnection() {
-        return DatabaseConnection.getConnection();
+    // Quản lý transaction JDBC bằng DataSource và tái sử dụng cùng một connection trong transaction hiện tại.
+    @Bean
+    public DataSourceTransactionManager transactionManager(DataSource dataSource) {
+        return new DataSourceTransactionManager(dataSource);
     }
 
     @Bean

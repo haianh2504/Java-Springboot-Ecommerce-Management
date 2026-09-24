@@ -1,6 +1,7 @@
 package order_item.repository;
 
 import order_item.entities.OrderItem;
+import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
@@ -11,12 +12,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import javax.sql.DataSource;
 
 @Repository
 public class JdbcOrderItemRepository implements OrderItemRepository {
-    private final Connection connection;
-    public JdbcOrderItemRepository(Connection connection) {
-        this.connection = Objects.requireNonNull(connection, "Order Items' Connection cannot be null");
+    private final DataSource dataSource;
+    public JdbcOrderItemRepository(DataSource dataSource) {
+        // DataSource cung cấp connection theo nhu cầu và tương thích transaction do Spring quản lý.
+        this.dataSource = new TransactionAwareDataSourceProxy(
+                Objects.requireNonNull(dataSource, "DataSource cannot be null")
+        );
     }
 //    save order item
     @Override
@@ -31,7 +36,8 @@ public class JdbcOrderItemRepository implements OrderItemRepository {
                 VALUES ( ?, ?, ?, ? )
                 RETURNING id;
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setLong(1,orderItem.getOrderId());
             ps.setLong(2, orderItem.getProductId());
@@ -65,7 +71,8 @@ public class JdbcOrderItemRepository implements OrderItemRepository {
                 unit_price
                 FROM order_items WHERE order_id=? AND product_id=? ;
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setLong(1,orderId);
             ps.setLong(2,productId);
@@ -102,7 +109,8 @@ public class JdbcOrderItemRepository implements OrderItemRepository {
                 FROM order_items WHERE order_id=?;
                 """;
         List<OrderItem> orderItems = new ArrayList<>();
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setLong(1,orderId);
             try(ResultSet rs = ps.executeQuery())
@@ -132,7 +140,8 @@ public class JdbcOrderItemRepository implements OrderItemRepository {
         String sql = """
                 DELETE FROM order_items WHERE order_id=? AND product_id=? ;
         """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setLong(1,orderId);
             ps.setLong(2,productId);

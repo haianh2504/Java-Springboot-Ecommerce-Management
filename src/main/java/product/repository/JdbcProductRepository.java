@@ -1,6 +1,7 @@
 package product.repository;
 
 import product.entities.*;
+import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
 import org.springframework.stereotype.Repository;
 import product.entities.name.ProductName;
 
@@ -11,14 +12,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import javax.sql.DataSource;
 
 @Repository
-public final class JdbcProductRepository implements ProductRepository {
-    private final Connection connection;
+public class JdbcProductRepository implements ProductRepository {
+    private final DataSource dataSource;
 //    constructor
-    public JdbcProductRepository(Connection connection)
+    public JdbcProductRepository(DataSource dataSource)
     {
-        this.connection = Objects.requireNonNull(connection, "Connection cannot be null");
+        // Proxy bảo đảm close() chỉ giải phóng handle và không đóng connection của transaction hiện tại.
+        this.dataSource = new TransactionAwareDataSourceProxy(
+                Objects.requireNonNull(dataSource, "DataSource cannot be null")
+        );
 
     }
 //    save Product
@@ -36,7 +41,8 @@ public final class JdbcProductRepository implements ProductRepository {
                 VALUES(?,?,?,?,?)
                 RETURNING id
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setString(1, product.getName().name());
             ps.setInt(2, product.getQuantity());
@@ -77,7 +83,8 @@ public final class JdbcProductRepository implements ProductRepository {
                 FROM products
                 WHERE id = ?
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             // gán id vào ?
             ps.setLong(1, productId);
@@ -121,7 +128,8 @@ public final class JdbcProductRepository implements ProductRepository {
                 created_at
                 FROM products WHERE name = ?
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setString(1, name.name());
             try(ResultSet rs = ps.executeQuery())
@@ -175,7 +183,8 @@ public final class JdbcProductRepository implements ProductRepository {
         }
         sql.append(" ORDER BY id");
 
-        try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql.toString())) {
             for (int index = 0; index < parameters.size(); index++) {
                 Object parameter = parameters.get(index);
                 if (parameter instanceof BigDecimal price) {
@@ -200,7 +209,8 @@ public final class JdbcProductRepository implements ProductRepository {
     @Override
     public void deleteById(Long productId) {
         String sql = "DELETE FROM products WHERE id = ?;";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, productId);
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -220,7 +230,8 @@ public final class JdbcProductRepository implements ProductRepository {
                 status = ?
                 WHERE id = ?;
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setString(1, product.getName().name());
             ps.setInt(2,product.getQuantity());
@@ -244,7 +255,8 @@ public final class JdbcProductRepository implements ProductRepository {
                   AND quantity >= ?
                 RETURNING id, name, quantity, price, status, created_at;
                 """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setInt(1, quantity);
             ps.setLong(2, productId);
@@ -269,7 +281,8 @@ public final class JdbcProductRepository implements ProductRepository {
                 WHERE id = ?
                 RETURNING id, name, quantity, price, status, created_at;
         """;
-        try(PreparedStatement ps = connection.prepareStatement(sql))
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql))
         {
             ps.setInt(1, quantity);
             ps.setLong(2, productId);
