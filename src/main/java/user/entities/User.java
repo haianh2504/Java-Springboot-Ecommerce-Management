@@ -1,7 +1,7 @@
 package user.entities;
-import exception.business.detailed_exceptions.AccountBannedException;
-import exception.business.detailed_exceptions.UserAlreadyActive;
-import exception.business.detailed_exceptions.UserAlreadyBanned;
+import common.exception.business.detailed_exceptions.AccountBannedException;
+import common.exception.business.detailed_exceptions.UserAlreadyActive;
+import common.exception.business.detailed_exceptions.UserAlreadyBanned;
 import jakarta.persistence.*;
 import lombok.Builder;
 import org.hibernate.annotations.Check;
@@ -120,35 +120,35 @@ public class User {
 //    No arguments constructor
     protected User() {}
 //    getters
-    public final Long getId()
+    public Long getId()
     {
         return this.id;
     }
-    public final PasswordHash getPasswordHash()
+    public PasswordHash getPasswordHash()
     {
         return this.passwordHash;
     }
-    public final PersonName getName()
+    public PersonName getName()
     {
         return this.name;
     }
-    public final PhoneNumber getPhoneNumber()
+    public PhoneNumber getPhoneNumber()
     {
         return this.phoneNumber;
     }
-    public final Email getEmail()
+    public Email getEmail()
     {
         return this.email;
     }
-    public final UserRole getRole()
+    public UserRole getRole()
     {
         return this.userRole;
     }
-    public final UserStatus getStatus()
+    public UserStatus getStatus()
     {
         return this.status;
     }
-    public final Instant getTimeCreated()
+    public Instant getTimeCreated()
     {
         return this.createdAt;
     }

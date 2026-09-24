@@ -84,14 +84,14 @@ public class Product {
         this.createdAt = Objects.requireNonNull(createdAt,"Timestampt createdAt cannot be null");
     }
 //    getters
-    public final Long getId(){return this.id;}
-    public final ProductName getName(){return this.name;}
-    public final int getQuantity(){return this.stockQuantity;}
-    public final BigDecimal getBasePrice() {
+    public Long getId(){return this.id;}
+    public ProductName getName(){return this.name;}
+    public int getQuantity(){return this.stockQuantity;}
+    public BigDecimal getBasePrice() {
         return basePrice;
     }
-    public final ProductStatus getStatus(){return this.status;}
-    public final Instant getCreatedAt(){return this.createdAt;}
+    public ProductStatus getStatus(){return this.status;}
+    public Instant getCreatedAt(){return this.createdAt;}
 
     //    setters
     public void changeProductName(ProductName name)

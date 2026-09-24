@@ -84,13 +84,13 @@ public class CartItem {
         this.number = number;
     }
 //    getters
-    public final Long getCartItemId(){return this.cartItemId;}
-    public final Long getCartId(){return this.cartId;}
-    public final Long getProductId()
+    public Long getCartItemId(){return this.cartItemId;}
+    public Long getCartId(){return this.cartId;}
+    public Long getProductId()
     {
         return this.productId;
     }
-    public final int getNumber()
+    public int getNumber()
     {
         return this.number;
     }

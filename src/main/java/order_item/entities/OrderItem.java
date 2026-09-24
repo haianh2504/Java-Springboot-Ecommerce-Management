@@ -92,15 +92,15 @@ public OrderItem(Long orderId, Long productId, int quantity, BigDecimal unitPric
 }
 
 //    getters
-    public final Long getOrderItemId() {return this.orderItemId;}
-    public final Long getOrderId() {return this.orderId;}
-    public final Long getProductId() {
+    public Long getOrderItemId() {return this.orderItemId;}
+    public Long getOrderId() {return this.orderId;}
+    public Long getProductId() {
         return this.productId;
     }
-    public final int getQuantity() {
+    public int getQuantity() {
         return quantity;
     }
-    public final BigDecimal getUnitPrice() {
+    public BigDecimal getUnitPrice() {
         return unitPrice;
     }
 }

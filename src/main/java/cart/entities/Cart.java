@@ -1,6 +1,6 @@
 package cart.entities;
 
-import exception.business.detailed_exceptions.CartAlreadyCheckedOutException;
+import common.exception.business.detailed_exceptions.CartAlreadyCheckedOutException;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -56,24 +56,24 @@ public class Cart {
     }
 
 //    getters
-    public final Long getCartId() {
+    public Long getCartId() {
         return this.cartId;
     }
 
-    public final Long getUserId() {
+    public Long getUserId() {
         return this.userId;
     }
 
-    public final Instant getCreatedAt() {
+    public Instant getCreatedAt() {
         return this.createdAt;
     }
 
-    public final CartStatus getCartStatus() {
+    public CartStatus getCartStatus() {
         return this.cartStatus;
     }
 
 //    setter
-    public final void setCheckedOutStatus() {
+    public void setCheckedOutStatus() {
         Objects.requireNonNull(cartStatus, "cartStatus cannot be null");
         if (this.cartStatus == CartStatus.CHECKED_OUT) {
             throw new CartAlreadyCheckedOutException();
