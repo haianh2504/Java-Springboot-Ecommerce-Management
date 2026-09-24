@@ -50,3 +50,5 @@ target/
 # macOS
 .DS_Store
 
+# Cấu hình local chứa thông tin kết nối cơ sở dữ liệu
+/src/main/resources/application.yml
