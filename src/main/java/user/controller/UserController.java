@@ -18,7 +18,7 @@ import user.service.UserManagementService;
 // v1 is for starting, building root
 // v2 is for updating...
 // v3 is about break old code to a new one -> impact clients while doing
-public class UserController {
+public final class UserController {
     private final UserManagementService userManagementService;
 
     // Do not need @AutoWired because only one parameter
