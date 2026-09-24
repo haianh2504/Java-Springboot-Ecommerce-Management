@@ -144,13 +144,13 @@ public class Order {
         }
     }
 //    getters
-    public final Long getOrderId(){return this.orderId;}
-    public final Long getCartId(){return this.cartId;}
-    public final OrderStatus getOrderStatus(){return this.orderStatus;}
-    public final Long getUserId(){return this.userId;}
-    public final BigDecimal getSubTotal(){return this.subTotal;}
-    public final BigDecimal getShippingFee(){return this.shippingFee;}
-    public final BigDecimal getDiscountAmount(){return this.discountAmount;}
-    public final BigDecimal getTotalPrice(){return this.totalPrice;}
-    public final Instant getCreatedAt(){return this.createdAt;}
+    public Long getOrderId(){return this.orderId;}
+    public Long getCartId(){return this.cartId;}
+    public OrderStatus getOrderStatus(){return this.orderStatus;}
+    public Long getUserId(){return this.userId;}
+    public BigDecimal getSubTotal(){return this.subTotal;}
+    public BigDecimal getShippingFee(){return this.shippingFee;}
+    public BigDecimal getDiscountAmount(){return this.discountAmount;}
+    public BigDecimal getTotalPrice(){return this.totalPrice;}
+    public Instant getCreatedAt(){return this.createdAt;}
 }

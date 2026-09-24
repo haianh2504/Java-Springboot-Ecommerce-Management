@@ -1,8 +1,7 @@
 package order.service;
 
-import exception.resource.detailed_exceptions.OrderNotFoundException;
+import common.exception.resource.detailed_exceptions.OrderNotFoundException;
 import order.entities.Order;
-import order.entities.OrderStatus;
 import order.repository.OrderRepository;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;

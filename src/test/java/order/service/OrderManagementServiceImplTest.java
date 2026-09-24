@@ -1,6 +1,6 @@
 package order.service;
 
-import exception.resource.detailed_exceptions.OrderNotFoundException;
+import common.exception.resource.detailed_exceptions.OrderNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -274,7 +274,7 @@ public class OrderManagementServiceImplTest {
         List<Order> persistedOrders = List.of(
                 createPersistedOrder(),
                 new Order(
-                        31L, USER_ID, 21L, OrderStatus.SUCESSFUL,
+                        31L, USER_ID, 21L, OrderStatus.SUCCESSFUL,
                         Instant.parse("2026-09-11T00:00:00Z"),
                         new BigDecimal("50.00"), new BigDecimal("5.00"),
                         BigDecimal.ZERO, new BigDecimal("55.00")
