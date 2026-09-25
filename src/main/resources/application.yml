@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: ecommerce-system
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/ecommerce}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      # quyết định Hibernate có được phép tác động vào database schema hay không
+      ddl-auto: none
+      # VALIDATE: Kiểm tra độ tương xứng giữa schema và entity ( khi schema và entity hoàn chỉnh )
+      # NONE: không đụng tới schema
+
+    # Cho phép hiển thị SQL mà Hibernate chạy lệnh SQL. ( trên console )
+    show-sql: true
+
+    properties:
+      hibernate:
+        # Cái này làm SQL Hibernate in ra dễ đọc hơn. ( hiển thị dọc )
+       format_sql: true
+server:
+  #là port mà embedded web server của Spring Boot sử dụng.
+  port: 8080 # Mặc định là Tomcat
+  #endpoint sẽ là: GET http://localhost:8080/products
+shipping:
+  flat-fee: 30000
